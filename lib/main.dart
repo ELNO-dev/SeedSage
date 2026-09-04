@@ -20,16 +20,16 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-@override
-Widget build(BuildContext context) {
-  return MaterialApp(
-    theme: AppTheme.lightTheme,
-    home: LandingRouter(
-      appConfig: appConfig,
-      authenticatedHome: const LandingPage(),
-    ),
-  );
-}
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: AppTheme.lightTheme,
+      home: LandingRouter(
+        appConfig: appConfig,
+        authenticatedHome: const LandingPage(),
+      ),
+    );
+  }
 }
 
 class MyHomePage extends StatelessWidget {
