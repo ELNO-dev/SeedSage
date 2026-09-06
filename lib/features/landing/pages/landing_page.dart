@@ -4,14 +4,18 @@ import 'package:foundation/widgets/elno_fab.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:seedsage/features/seed_type/pages/add_seed_type.dart';
 import '../../../config/app_config.dart';
+import '../../main_menu/pages/main_menu.dart';
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
+
+  
 
   @override
   Widget build(BuildContext pageContext) {
     return ElnoPageLayout(
       appConfig: appConfig,
+      mainMenu: MainMenu(appConfig: appConfig,),
       pageContent: Column(
         children: [
           const SizedBox(height: 8),
@@ -51,8 +55,25 @@ class LandingPage extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+            ),       
           ),
+Expanded(
+  child: Container(
+    width: double.infinity,
+     height: double.infinity,
+    decoration: const BoxDecoration(
+      image: DecorationImage(
+        image: AssetImage(
+          'assets/images/backgrounds/VineLanding 2.png',
+
+        ),
+        fit: BoxFit.fitHeight,
+        alignment: Alignment.topCenter,
+        opacity: 0.6,
+      ),
+    ),
+  ),
+),
         ],
       ),
       floatingActionButton: ElnoFab(

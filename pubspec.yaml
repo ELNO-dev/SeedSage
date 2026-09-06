@@ -70,6 +70,7 @@ flutter:
   assets:
     - assets/images/seeds/
     - assets/images/frills/
+    - assets/images/backgrounds/
     - assets/logos/
     - assets/fonts/
     - assets/icons/

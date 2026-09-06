@@ -1,4 +1,4 @@
-import 'package:foundation/config/app_config.dart';
+import 'package:foundation/models/elno_app_config.dart';
 
 const appConfig = AppConfig(
   appName: 'SeedSage',
