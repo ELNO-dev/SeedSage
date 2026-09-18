@@ -1,4 +1,4 @@
-import '../models/seed_image.dart';
+import '../models/seed_type_image.dart';
 
 const List<SeedImage> seedImages = [
   SeedImage(id: 'zinnia', assetPath: 'assets/images/seeds/Zinnia.png'),

@@ -3,7 +3,7 @@ import 'package:foundation/widgets/elno_page_layout.dart';
 import 'config/app_theme.dart';
 import 'config/app_config.dart';
 import 'package:foundation/widgets/landing_router.dart';
-import 'features/landing/pages/landing_page.dart';
+import 'pages/landing_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {

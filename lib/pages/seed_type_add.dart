@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
-import '../../../config/app_config.dart';
-import 'select_seed_image.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../models/seed_image.dart';
+import 'package:seedsage/models/seed_type.dart';
+import 'package:seedsage/services/evt_obj_crud_service.dart';
+import 'package:seedsage/services/object_CRUD_service.dart';
+import 'package:seedsage/services/seed_type_crud_service.dart';
+import '../config/app_config.dart';
+import 'seed_type_image_select.dart';
+import '../models/seed_type_image.dart';
 
 class AddSeedType extends StatefulWidget {
   const AddSeedType({super.key});
@@ -32,6 +35,9 @@ class _AddSeedTypeState extends State<AddSeedType> {
   final TextEditingController _minFruitDayController = TextEditingController();
   final TextEditingController _maxFruitDayController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final SeedTypeService _seedTypeService = SeedTypeService();
+  final ObjectCrudService _objectService = ObjectCrudService();
+  final EvtObjCrudService _evtObjCrudService = EvtObjCrudService();
 
   void _clearForm() {
     _commonNameController.clear();
@@ -62,7 +68,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
     _formKey.currentState?.reset();
   }
 
-  final ElnoMdService _mdService = ElnoMdService();
+  final ElnoMdCrudService _mdService = ElnoMdCrudService();
   bool _stratificationRequired = false;
   bool _pinchingRequired = false;
   String? _lifeCycle;
@@ -73,7 +79,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
   bool _isSaving = false;
 
   Future<void> _loadSeedTypeObjectType() async {
-    final options = await _mdService.getOptions('OBJ_OBJECT_TYPE');
+    final options = await _mdService.getMdOptionsByType('OBJ_OBJECT_TYPE');
 
     final seedTypeOption = options.firstWhere(
       (option) => option.valueCode == 'OBJ_OBJECT_TYPE_SEED_TYPE',
@@ -85,7 +91,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
   }
 
   Future<void> _loadSeedTypeStatus() async {
-    final options = await _mdService.getOptions('OBJ_STATUS');
+    final options = await _mdService.getMdOptionsByType('OBJ_STATUS');
 
     final seedTypeStatus = options.firstWhere(
       (option) => option.valueCode == 'OBJ_STATUS_NOT_SOWN',
@@ -97,7 +103,9 @@ class _AddSeedTypeState extends State<AddSeedType> {
   }
 
   Future<void> _testLifeCycleLoad() async {
-    final options = await _mdService.getOptions('OBJ_SEED_TYPE_LIFE_CYCLE');
+    final options = await _mdService.getMdOptionsByType(
+      'OBJ_SEED_TYPE_LIFE_CYCLE',
+    );
 
     setState(() {
       _lifeCycleOptions = options;
@@ -410,67 +418,94 @@ class _AddSeedTypeState extends State<AddSeedType> {
                 setState(() {
                   _isSaving = true;
                 });
-
+                if (!isValid) return;
                 if (isValid) {
-                  final response = await Supabase.instance.client
-                      .from('obj_object')
-                      .insert({'object_type_uuid': _seedTypeObjectTypeUuid})
-                      .select('object_uuid')
-                      .single();
-                  final objectUuid = response['object_uuid'];
-
-                  debugPrint('OBJECT CREATED: ${response['object_uuid']}');
-
-                  await Supabase.instance.client.from('obj_seed_type').insert({
-                    'seed_type_object_uuid': objectUuid,
-                    'common_name': _commonNameController.text.trim(),
-                    'variant': _varietyController.text.trim(),
-                    'botanical_name': _botanicalNameController.text.trim(),
-                    'description': _descriptionController.text.trim(),
-                    'min_germination_temperature_c': int.tryParse(
+                  String? objectUuid;
+                  try {
+                    objectUuid = await _objectService.createObjectfromType(
+                      _seedTypeObjectTypeUuid!,
+                    );
+                    if (!pageContext.mounted) return;
+                  } catch (error) {
+                    if (!pageContext.mounted) return;
+                    ScaffoldMessenger.of(pageContext).showSnackBar(
+                      AppSnackBar.failed(
+                        message:
+                            'Seed could not be created, please try again later',
+                      ),
+                    );
+                    return;
+                  }
+                  final seedType = SeedType(
+                    seedTypeObjectUuid: objectUuid,
+                    commonName: _commonNameController.text.trim(),
+                    variant: _varietyController.text.trim(),
+                    botanicalName: _botanicalNameController.text.trim(),
+                    description: _descriptionController.text.trim(),
+                    minGerminationTemperatureC: int.tryParse(
                       _minGermController.text,
                     ),
-                    'max_germination_temperature_c': int.tryParse(
+                    maxGerminationTemperatureC: int.tryParse(
                       _maxGermController.text,
                     ),
-                    'growing_instructions': _growingInstController.text.trim(),
-                    'min_height_cm': int.tryParse(_minHeightController.text),
-                    'max_height_cm': int.tryParse(_maxHeightController.text),
-                    'min_spacing_cm': int.tryParse(_minSpaceController.text),
-                    'max_spacing_cm': int.tryParse(_maxSpaceController.text),
-
-                    'stratification_required': _stratificationRequired,
-                    'pinching_required': _pinchingRequired,
-
-                    'min_germination_days': int.tryParse(
+                    growingInstructions: _growingInstController.text.trim(),
+                    minHeightCm: int.tryParse(_minHeightController.text),
+                    maxHeightCm: int.tryParse(_maxHeightController.text),
+                    minSpacingCm: int.tryParse(_minSpaceController.text),
+                    maxSpacingCm: int.tryParse(_maxSpaceController.text),
+                    stratificationRequired: _stratificationRequired,
+                    pinchingRequired: _pinchingRequired,
+                    minGerminationDays: int.tryParse(
                       _minGermDayController.text,
                     ),
-                    'max_germination_days': int.tryParse(
+                    maxGerminationDays: int.tryParse(
                       _maxGermDayController.text,
                     ),
-
-                    'min_transplant_days': int.tryParse(
+                    minTransplantDays: int.tryParse(
                       _minTransDayController.text,
                     ),
-                    'max_transplant_days': int.tryParse(
+                    maxTransplantDays: int.tryParse(
                       _maxTransDayController.text,
                     ),
-
-                    'min_flower_fruit_days': int.tryParse(
+                    minFlowerFruitDays: int.tryParse(
                       _minFruitDayController.text,
                     ),
-                    'max_flower_fruit_days': int.tryParse(
+                    maxFlowerFruitDays: int.tryParse(
                       _maxFruitDayController.text,
                     ),
-                    'life_cycle_uuid': _lifeCycle,
-                    'image_id': _selectedImage?.id,
-                  });
+                    lifeCycleUuid: _lifeCycle,
+                    imageId: _selectedImage?.id,
+                  );
 
-                  await Supabase.instance.client.from('evt_obj').insert({
-                    'object_uuid': objectUuid,
-                    'event_type_uuid': _seedTypeObjectStatusUuid,
-                    'event_date': DateTime.now().toIso8601String(),
-                  });
+                  try {
+                    await _seedTypeService.createSeedType(seedType);
+                    if (!pageContext.mounted) return;
+                  } catch (error) {
+                    if (!pageContext.mounted) return;
+                    ScaffoldMessenger.of(pageContext).showSnackBar(
+                      AppSnackBar.failed(
+                        message:
+                            'Seed could not be created, please try again later',
+                      ),
+                    );
+                  }
+
+                  try {
+                    await _evtObjCrudService.createEvtObj(
+                      objectUuid,
+                      _seedTypeObjectStatusUuid!,
+                    );
+                    if (!pageContext.mounted) return;
+                    Navigator.pop(pageContext);
+                  } catch (error) {
+                    if (!pageContext.mounted) return;
+                    ScaffoldMessenger.of(pageContext).showSnackBar(
+                      AppSnackBar.failed(
+                        message:
+                            'Seed could not be created, please try again later',
+                      ),
+                    );
+                  }
 
                   debugPrint('SEED TYPE CREATED - ');
                   debugPrint(_lifeCycle);

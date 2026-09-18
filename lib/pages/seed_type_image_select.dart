@@ -1,21 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:foundation/widgets/elno_page_layout.dart';
-import 'package:foundation/widgets/elno_fab.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:seedsage/features/seed_type/pages/add_seed_type.dart';
-import '../../../config/app_config.dart';
-import '../../main_menu/pages/main_menu.dart';
+import '../config/app_config.dart';
+import '../config/seed_type_image_index.dart';
+import 'package:foundation/foundation.dart';
 
-class LandingPage extends StatelessWidget {
-  const LandingPage({super.key});
+class SearchSeedImage extends StatefulWidget {
+  const SearchSeedImage({super.key});
 
-  
+  @override
+  State<SearchSeedImage> createState() => _SearchSeedImageState();
+}
+
+class _SearchSeedImageState extends State<SearchSeedImage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext pageContext) {
+    final searchText = _searchController.text.toLowerCase();
+
+    final filteredImages = seedImages.where((image) {
+      return image.id.toLowerCase().contains(searchText);
+    }).toList();
+
     return ElnoPageLayout(
       appConfig: appConfig,
-      mainMenu: MainMenu(appConfig: appConfig,),
+      pageTitle: 'Search for an image',
+      showBackButton: true,
       pageContent: Column(
         children: [
           const SizedBox(height: 8),
@@ -35,9 +50,13 @@ class LandingPage extends StatelessWidget {
                       fit: BoxFit.fitWidth,
                     ),
                   ),
-                  const TextField(
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {});
+                    },
                     decoration: InputDecoration(
-                      hintText: 'Find a seed...',
+                      hintText: 'Find a seed image...',
                       hintStyle: TextStyle(
                         fontSize: 14,
                         fontStyle: FontStyle.italic,
@@ -55,38 +74,22 @@ class LandingPage extends StatelessWidget {
                   ),
                 ],
               ),
-            ),       
+            ),
           ),
-Expanded(
-  child: Container(
-    width: double.infinity,
-     height: double.infinity,
-    decoration: const BoxDecoration(
-      image: DecorationImage(
-        image: AssetImage(
-          'assets/images/backgrounds/VineLanding 2.png',
-
-        ),
-        fit: BoxFit.fitHeight,
-        alignment: Alignment.topCenter,
-        opacity: 0.6,
-      ),
-    ),
-  ),
-),
-        ],
-      ),
-      floatingActionButton: ElnoFab(
-        fabIcon: LucideIcons.pencil100,
-        actions: [
-          ElnoFabAction(
-            label: 'Add a seed type',
-            onSelected: () {
-              Navigator.of(pageContext).push(
-                MaterialPageRoute(builder: (context) => const AddSeedType()),
-              );
-            },
-          ),
+          const SizedBox(height: 16),
+          ...filteredImages.map((image) {
+            return ListTile(
+              leading: SizedBox(
+                width: 70,
+                height: 70,
+                child: Image.asset(image.assetPath, fit: BoxFit.contain),
+              ),
+              title: Text(image.id),
+              onTap: () {
+                Navigator.pop(pageContext, image);
+              },
+            );
+          }),
         ],
       ),
     );

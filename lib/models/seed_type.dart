@@ -37,7 +37,7 @@ class SeedType {
     required this.minSpacingCm,
     required this.maxSpacingCm,
     required this.lifeCycleUuid,
-    required this.seedGroupingUuid,
+    this.seedGroupingUuid,
     required this.stratificationRequired,
     required this.minGerminationDays,
     required this.maxGerminationDays,

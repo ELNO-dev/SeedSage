@@ -3,11 +3,7 @@ class SeedTypeListQuery {
   final String? commonName;
   final String? variant;
 
-  const SeedTypeListQuery({
-    this.statusUuid,
-    this.commonName,
-    this.variant,
-  });
+  const SeedTypeListQuery({this.statusUuid, this.commonName, this.variant});
 }
 
 class SeedTypeListData {

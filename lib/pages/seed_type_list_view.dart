@@ -1,12 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:seedsage/features/seed_type/pages/add_seed_type.dart';
-
-import '../../../config/app_config.dart';
-import '../../../models/seed_type_list_data.dart';
-import '../../main_menu/pages/main_menu.dart';
+import 'package:seedsage/pages/seed_type_add.dart';
+import 'seed_type_details.dart';
+import '../config/app_config.dart';
+import '../models/seed_type_list_data.dart';
+import 'main_menu.dart';
 import '../services/seed_type_list_service.dart';
+
+// -----------------------------------------------------------------------------
+// SEED LIST VIEW - FUNCTIONAL TODO BEFORE MAKING IT PRETTY
+// -----------------------------------------------------------------------------
+//
+//
+//
+
+// 6. LOADING + ERROR HANDLING
+//    - Show something while seed data is loading.
+//    - Show a user-friendly message if loading fails.
+//    - Allow the user to retry.
+//
+// 7. EMPTY ACCOUNT
+//    - Handle a user with zero seed types.
+//    - Give them an obvious route to Add Seed Type.
+//
+// -----------------------------------------------------------------------------
+// WHEN ALL OF THE ABOVE WORKS:
+// STOP FUNCTIONAL DEVELOPMENT AND MAKE THE BITCH PRETTY.
+// -----------------------------------------------------------------------------
 
 class SeedList extends StatefulWidget {
   const SeedList({super.key});
@@ -16,7 +37,7 @@ class SeedList extends StatefulWidget {
 }
 
 class _SeedListState extends State<SeedList> {
-  final ElnoMdService _mdService = ElnoMdService();
+  final ElnoMdCrudService _mdService = ElnoMdCrudService();
   final SeedTypeListService _seedTypeListService = SeedTypeListService();
 
   List<ElnoMdOption> _statuses = [];
@@ -36,7 +57,7 @@ class _SeedListState extends State<SeedList> {
   }
 
   Future<void> _loadSeedTypeStatuses() async {
-    final options = await _mdService.getOptions('OBJ_STATUS');
+    final options = await _mdService.getMdOptionsByType('OBJ_STATUS');
 
     if (!mounted) return;
 
@@ -93,11 +114,7 @@ class _SeedListState extends State<SeedList> {
       return 0;
     }
 
-    return _seeds
-        .where(
-          (seed) => seed.statusUuid == notSownStatus.uuid,
-        )
-        .length;
+    return _seeds.where((seed) => seed.statusUuid == notSownStatus.uuid).length;
   }
 
   int get _sownCount {
@@ -110,18 +127,15 @@ class _SeedListState extends State<SeedList> {
         return false;
       }
 
-      if (notSownStatus != null &&
-          seed.statusUuid == notSownStatus.uuid) {
+      if (notSownStatus != null && seed.statusUuid == notSownStatus.uuid) {
         return false;
       }
 
-      if (doneStatus != null &&
-          seed.statusUuid == doneStatus.uuid) {
+      if (doneStatus != null && seed.statusUuid == doneStatus.uuid) {
         return false;
       }
 
-      if (lostStatus != null &&
-          seed.statusUuid == lostStatus.uuid) {
+      if (lostStatus != null && seed.statusUuid == lostStatus.uuid) {
         return false;
       }
 
@@ -130,53 +144,57 @@ class _SeedListState extends State<SeedList> {
   }
 
   Widget _buildSeedCard(SeedTypeListData seed) {
-    final hasVariant =
-        seed.variant != null && seed.variant!.trim().isNotEmpty;
+    final hasVariant = seed.variant != null && seed.variant!.trim().isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 24,
-        vertical: 5,
-      ),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => SeedDetail(seedTypeUuid: seed.seedTypeUuid),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              seed.commonName,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (hasVariant) ...[
-              const SizedBox(height: 2),
-              Text(
-                seed.variant!,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                  color: Color(0xFF77706E),
-                ),
+          );
+          await _loadSeedTypes();
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
-          ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                seed.commonName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (hasVariant) ...[
+                const SizedBox(height: 2),
+                Text(
+                  seed.variant!,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: Color(0xFF77706E),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -184,9 +202,7 @@ class _SeedListState extends State<SeedList> {
 
   Widget _buildStatusExpansion(ElnoMdOption status) {
     final matchingSeeds = _filteredSeeds
-        .where(
-          (seed) => seed.statusUuid == status.uuid,
-        )
+        .where((seed) => seed.statusUuid == status.uuid)
         .toList();
 
     return Stack(
@@ -200,17 +216,11 @@ class _SeedListState extends State<SeedList> {
           children: [
             const SizedBox(height: 24),
 
-            ...matchingSeeds.map(
-              (seed) => _buildSeedCard(seed),
-            ),
+            ...matchingSeeds.map((seed) => _buildSeedCard(seed)),
 
             if (matchingSeeds.isEmpty)
               const Padding(
-                padding: EdgeInsets.only(
-                  left: 24,
-                  right: 24,
-                  bottom: 10,
-                ),
+                padding: EdgeInsets.only(left: 24, right: 24, bottom: 10),
                 child: Text(
                   'No seeds',
                   style: TextStyle(
@@ -229,9 +239,7 @@ class _SeedListState extends State<SeedList> {
           right: 0,
           child: IgnorePointer(
             child: Center(
-              child: ElnoSectionHeader(
-                headerString: status.displayValue,
-              ),
+              child: ElnoSectionHeader(headerString: status.displayValue),
             ),
           ),
         ),
@@ -239,10 +247,7 @@ class _SeedListState extends State<SeedList> {
     );
   }
 
-  Widget _buildTotalCard({
-    required String label,
-    required int count,
-  }) {
+  Widget _buildTotalCard({required String label, required int count}) {
     return Expanded(
       child: Container(
         height: 90,
@@ -260,17 +265,11 @@ class _SeedListState extends State<SeedList> {
         ),
         child: Column(
           children: [
-            Text(
-              label,
-              textAlign: TextAlign.center,
-            ),
+            Text(label, textAlign: TextAlign.center),
             const SizedBox(height: 1),
             Text(
               count.toString(),
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -282,9 +281,7 @@ class _SeedListState extends State<SeedList> {
   Widget build(BuildContext pageContext) {
     return ElnoPageLayout(
       appConfig: appConfig,
-      mainMenu: MainMenu(
-        appConfig: appConfig,
-      ),
+      mainMenu: MainMenu(appConfig: appConfig),
       pageContent: Column(
         children: [
           const SizedBox(height: 8),
@@ -339,17 +336,11 @@ class _SeedListState extends State<SeedList> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                _buildTotalCard(
-                  label: 'Not Sown',
-                  count: _notSownCount,
-                ),
+                _buildTotalCard(label: 'Not Sown', count: _notSownCount),
 
                 const SizedBox(width: 24),
 
-                _buildTotalCard(
-                  label: 'Sown',
-                  count: _sownCount,
-                ),
+                _buildTotalCard(label: 'Sown', count: _sownCount),
               ],
             ),
           ),
@@ -364,22 +355,21 @@ class _SeedListState extends State<SeedList> {
             ),
           ),
 
-          ..._statuses.map(
-            (status) => _buildStatusExpansion(status),
-          ),
+          ..._statuses.map((status) => _buildStatusExpansion(status)),
         ],
       ),
       floatingActionButton: ElnoFab(
         fabIcon: LucideIcons.pencil100,
+        backgroundColor: const Color(0xFFF6C3D3),
         actions: [
           ElnoFabAction(
             label: 'Add a seed type',
-            onSelected: () {
-              Navigator.of(pageContext).push(
-                MaterialPageRoute(
-                  builder: (context) => const AddSeedType(),
-                ),
+
+            onSelected: () async {
+              await Navigator.of(pageContext).push(
+                MaterialPageRoute(builder: (context) => const AddSeedType()),
               );
+              await _loadSeedTypes();
             },
           ),
         ],
