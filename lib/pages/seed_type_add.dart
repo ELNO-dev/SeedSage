@@ -6,7 +6,9 @@ import 'package:seedsage/services/object_CRUD_service.dart';
 import 'package:seedsage/services/seed_type_crud_service.dart';
 import '../config/app_config.dart';
 import 'seed_type_image_select.dart';
-import '../models/seed_type_image.dart';
+import '../models/images.dart';
+import 'dart:typed_data';
+import '../services/img_crud_service.dart';
 
 class AddSeedType extends StatefulWidget {
   const AddSeedType({super.key});
@@ -18,8 +20,7 @@ class AddSeedType extends StatefulWidget {
 class _AddSeedTypeState extends State<AddSeedType> {
   final TextEditingController _commonNameController = TextEditingController();
   final TextEditingController _varietyController = TextEditingController();
-  final TextEditingController _botanicalNameController =
-      TextEditingController();
+  final TextEditingController _botanicalNameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _minGermController = TextEditingController();
   final TextEditingController _maxGermController = TextEditingController();
@@ -38,6 +39,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
   final SeedTypeService _seedTypeService = SeedTypeService();
   final ObjectCrudService _objectService = ObjectCrudService();
   final EvtObjCrudService _evtObjCrudService = EvtObjCrudService();
+  final ImgCrudService _imgCrudService = ImgCrudService();
 
   void _clearForm() {
     _commonNameController.clear();
@@ -73,7 +75,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
   bool _pinchingRequired = false;
   String? _lifeCycle;
   List<ElnoMdOption> _lifeCycleOptions = [];
-  SeedImage? _selectedImage;
+  Img? _selectedImage;
   String? _seedTypeObjectTypeUuid;
   String? _seedTypeObjectStatusUuid;
   bool _isSaving = false;
@@ -81,9 +83,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
   Future<void> _loadSeedTypeObjectType() async {
     final options = await _mdService.getMdOptionsByType('OBJ_OBJECT_TYPE');
 
-    final seedTypeOption = options.firstWhere(
-      (option) => option.valueCode == 'OBJ_OBJECT_TYPE_SEED_TYPE',
-    );
+    final seedTypeOption = options.firstWhere((option) => option.valueCode == 'OBJ_OBJECT_TYPE_SEED_TYPE');
 
     setState(() {
       _seedTypeObjectTypeUuid = seedTypeOption.uuid;
@@ -93,9 +93,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
   Future<void> _loadSeedTypeStatus() async {
     final options = await _mdService.getMdOptionsByType('OBJ_STATUS');
 
-    final seedTypeStatus = options.firstWhere(
-      (option) => option.valueCode == 'OBJ_STATUS_NOT_SOWN',
-    );
+    final seedTypeStatus = options.firstWhere((option) => option.valueCode == 'OBJ_STATUS_NOT_SOWN');
 
     setState(() {
       _seedTypeObjectStatusUuid = seedTypeStatus.uuid;
@@ -103,9 +101,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
   }
 
   Future<void> _testLifeCycleLoad() async {
-    final options = await _mdService.getMdOptionsByType(
-      'OBJ_SEED_TYPE_LIFE_CYCLE',
-    );
+    final options = await _mdService.getMdOptionsByType('OBJ_SEED_TYPE_LIFE_CYCLE');
 
     setState(() {
       _lifeCycleOptions = options;
@@ -159,33 +155,36 @@ class _AddSeedTypeState extends State<AddSeedType> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: InkWell(
                 onTap: () async {
-                  final selectedImage = await Navigator.of(pageContext)
-                      .push<SeedImage>(
-                        MaterialPageRoute(
-                          builder: (context) => const SearchSeedImage(),
-                        ),
-                      );
+                  final selectedImage = await Navigator.of(
+                    pageContext,
+                  ).push<Img>(MaterialPageRoute(builder: (context) => const SearchSeedImage()));
 
                   setState(() {
                     _selectedImage = selectedImage;
                   });
                 },
                 child: SizedBox(
-                  height: 220,
+                  height: 200,
                   child: _selectedImage == null
                       ? const Center(
                           child: Text(
                             'Click here to select an image...',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontStyle: FontStyle.italic,
-                              color: Color(0xFFA7A19F),
-                            ),
+                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Color(0xFFA7A19F)),
                           ),
                         )
-                      : Image.asset(
-                          _selectedImage!.assetPath,
-                          fit: BoxFit.contain,
+                      : FutureBuilder<Uint8List>(
+                          future: _imgCrudService.getImage(_selectedImage!.storagePath),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return const Icon(Icons.error);
+                            }
+
+                            if (!snapshot.hasData) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+
+                            return Image.memory(snapshot.data!, fit: BoxFit.contain);
+                          },
                         ),
                 ),
               ),
@@ -221,13 +220,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
 
             const SizedBox(height: 24),
 
-            Opacity(
-              opacity: 0.4,
-              child: Image.asset(
-                'assets/images/frills/long_frill.png',
-                fit: BoxFit.contain,
-              ),
-            ),
+            Opacity(opacity: 0.4, child: Image.asset('assets/images/frills/long_frill.png', fit: BoxFit.contain)),
 
             const SizedBox(height: 32),
 
@@ -240,8 +233,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
                 const SizedBox(height: 12),
                 ElnoTextInput(
                   labelText: 'Description',
-                  hintText:
-                      'Vibrant, warm-season annual flowering plants belonging to the daisy family',
+                  hintText: 'Vibrant, warm-season annual flowering plants belonging to the daisy family',
                   numLines: 4,
                   requiredField: false,
                   controller: _descriptionController,
@@ -281,13 +273,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
 
                 const SizedBox(height: 24),
 
-                Opacity(
-                  opacity: 0.4,
-                  child: Image.asset(
-                    'assets/images/frills/long_frill.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                Opacity(opacity: 0.4, child: Image.asset('assets/images/frills/long_frill.png', fit: BoxFit.contain)),
               ],
             ),
 
@@ -347,13 +333,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
 
                 const SizedBox(height: 24),
 
-                Opacity(
-                  opacity: 0.4,
-                  child: Image.asset(
-                    'assets/images/frills/long_frill.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                Opacity(opacity: 0.4, child: Image.asset('assets/images/frills/long_frill.png', fit: BoxFit.contain)),
               ],
             ),
 
@@ -396,58 +376,47 @@ class _AddSeedTypeState extends State<AddSeedType> {
 
                 const SizedBox(height: 24),
 
-                Opacity(
-                  opacity: 0.4,
-                  child: Image.asset(
-                    'assets/images/frills/long_frill.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                Opacity(opacity: 0.4, child: Image.asset('assets/images/frills/long_frill.png', fit: BoxFit.contain)),
               ],
             ),
 
             const SizedBox(height: 32),
 
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-              ),
+              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
               onPressed: () async {
                 final isValid = _formKey.currentState!.validate();
 
                 setState(() {
                   _isSaving = true;
                 });
-                if (!isValid) return;
+                if (!isValid) {
+                  setState(() {
+                    _isSaving = false;
+                  });
+                  return;
+                }
                 if (isValid) {
                   String? objectUuid;
                   try {
-                    objectUuid = await _objectService.createObjectfromType(
-                      _seedTypeObjectTypeUuid!,
-                    );
+                    objectUuid = await _objectService.createObjectfromType(_seedTypeObjectTypeUuid!);
                     if (!pageContext.mounted) return;
                   } catch (error) {
                     if (!pageContext.mounted) return;
-                    ScaffoldMessenger.of(pageContext).showSnackBar(
-                      AppSnackBar.failed(
-                        message:
-                            'Seed could not be created, please try again later',
-                      ),
-                    );
+                    ScaffoldMessenger.of(
+                      pageContext,
+                    ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be created, please try again later'));
                     return;
                   }
+                  print('SELECTED IMAGE UUID: ${_selectedImage?.imageObjectUuid}');
                   final seedType = SeedType(
                     seedTypeObjectUuid: objectUuid,
                     commonName: _commonNameController.text.trim(),
                     variant: _varietyController.text.trim(),
                     botanicalName: _botanicalNameController.text.trim(),
                     description: _descriptionController.text.trim(),
-                    minGerminationTemperatureC: int.tryParse(
-                      _minGermController.text,
-                    ),
-                    maxGerminationTemperatureC: int.tryParse(
-                      _maxGermController.text,
-                    ),
+                    minGerminationTemperatureC: int.tryParse(_minGermController.text),
+                    maxGerminationTemperatureC: int.tryParse(_maxGermController.text),
                     growingInstructions: _growingInstController.text.trim(),
                     minHeightCm: int.tryParse(_minHeightController.text),
                     maxHeightCm: int.tryParse(_maxHeightController.text),
@@ -455,26 +424,14 @@ class _AddSeedTypeState extends State<AddSeedType> {
                     maxSpacingCm: int.tryParse(_maxSpaceController.text),
                     stratificationRequired: _stratificationRequired,
                     pinchingRequired: _pinchingRequired,
-                    minGerminationDays: int.tryParse(
-                      _minGermDayController.text,
-                    ),
-                    maxGerminationDays: int.tryParse(
-                      _maxGermDayController.text,
-                    ),
-                    minTransplantDays: int.tryParse(
-                      _minTransDayController.text,
-                    ),
-                    maxTransplantDays: int.tryParse(
-                      _maxTransDayController.text,
-                    ),
-                    minFlowerFruitDays: int.tryParse(
-                      _minFruitDayController.text,
-                    ),
-                    maxFlowerFruitDays: int.tryParse(
-                      _maxFruitDayController.text,
-                    ),
+                    minGerminationDays: int.tryParse(_minGermDayController.text),
+                    maxGerminationDays: int.tryParse(_maxGermDayController.text),
+                    minTransplantDays: int.tryParse(_minTransDayController.text),
+                    maxTransplantDays: int.tryParse(_maxTransDayController.text),
+                    minFlowerFruitDays: int.tryParse(_minFruitDayController.text),
+                    maxFlowerFruitDays: int.tryParse(_maxFruitDayController.text),
                     lifeCycleUuid: _lifeCycle,
-                    imageId: _selectedImage?.id,
+                    imageId: _selectedImage?.imageObjectUuid,
                   );
 
                   try {
@@ -482,29 +439,20 @@ class _AddSeedTypeState extends State<AddSeedType> {
                     if (!pageContext.mounted) return;
                   } catch (error) {
                     if (!pageContext.mounted) return;
-                    ScaffoldMessenger.of(pageContext).showSnackBar(
-                      AppSnackBar.failed(
-                        message:
-                            'Seed could not be created, please try again later',
-                      ),
-                    );
+                    ScaffoldMessenger.of(
+                      pageContext,
+                    ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be created, please try again later'));
                   }
 
                   try {
-                    await _evtObjCrudService.createEvtObj(
-                      objectUuid,
-                      _seedTypeObjectStatusUuid!,
-                    );
+                    await _evtObjCrudService.createEvtObj(objectUuid, _seedTypeObjectStatusUuid!);
                     if (!pageContext.mounted) return;
                     Navigator.pop(pageContext);
                   } catch (error) {
                     if (!pageContext.mounted) return;
-                    ScaffoldMessenger.of(pageContext).showSnackBar(
-                      AppSnackBar.failed(
-                        message:
-                            'Seed could not be created, please try again later',
-                      ),
-                    );
+                    ScaffoldMessenger.of(
+                      pageContext,
+                    ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be created, please try again later'));
                   }
 
                   debugPrint('SEED TYPE CREATED - ');
@@ -517,11 +465,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
                 }
               },
               child: _isSaving
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Save the seed', style: TextStyle(fontSize: 20)),
             ),
           ],

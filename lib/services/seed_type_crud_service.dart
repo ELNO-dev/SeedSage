@@ -6,10 +6,7 @@ class SeedTypeService {
 
   // Delete a seed type based on a submitted UUID
   Future<void> deleteSeedType(String seedTypeUuid) async {
-    await _supabase
-        .from('obj_seed_type')
-        .delete()
-        .eq('seed_type_object_uuid', seedTypeUuid);
+    await _supabase.from('obj_seed_type').delete().eq('seed_type_object_uuid', seedTypeUuid);
   }
 
   // Create a seed type using submitted attributes
@@ -36,8 +33,19 @@ class SeedTypeService {
       'min_flower_fruit_days': seedType.minFlowerFruitDays,
       'max_flower_fruit_days': seedType.maxFlowerFruitDays,
       'life_cycle_uuid': seedType.lifeCycleUuid,
-      'image_id': seedType.imageId,
     });
+    print('SERVICE IMAGE ID: ${seedType.imageId}');
+    if (seedType.imageId != null) {
+      try {
+        await _supabase.from('img_object_link').insert({
+          'image_object_uuid': seedType.imageId,
+          'object_uuid': seedType.seedTypeObjectUuid,
+        });
+      } catch (e) {
+        print('IMAGE LINK ERROR: $e');
+        rethrow;
+      }
+    }
   }
 
   // Update a seed type using submitted attributes based on the seed type UUID
@@ -80,26 +88,24 @@ class SeedTypeService {
     final seedType = SeedType(
       seedTypeObjectUuid: seedTypeUuid,
       commonName: result?['common_name'] ?? '',
-      variant: result?['variant'] ?? '',
-      botanicalName: result?['botanical_name'] ?? '',
-      description: result?['description'] ?? '',
-      minGerminationTemperatureC:
-          result?['min_germination_temperature_c'] ?? '',
-      maxGerminationTemperatureC:
-          result?['max_germination_temperature_c'] ?? '',
-      growingInstructions: result?['growing_instructions'] ?? '',
-      stratificationRequired: result?['stratification_required'] ?? false,
-      pinchingRequired: result?['pinching_required'] ?? false,
-      minHeightCm: result?['min_height_cm'] ?? '',
-      maxHeightCm: result?['max_height_cm'] ?? '',
-      minSpacingCm: result?['min_spacing_cm'] ?? '',
-      maxSpacingCm: result?['max_spacing_cm'] ?? '',
-      minGerminationDays: result?['min_germination_days'] ?? '',
-      maxGerminationDays: result?['max_germination_days'] ?? '',
-      minTransplantDays: result?['min_transplant_days'] ?? '',
-      maxTransplantDays: result?['max_transplant_days'] ?? '',
-      minFlowerFruitDays: result?['min_flower_fruit_days'] ?? '',
-      maxFlowerFruitDays: result?['max_flower_fruit_days'] ?? '',
+      variant: result?['variant'],
+      botanicalName: result?['botanical_name'],
+      description: result?['description'],
+      minGerminationTemperatureC: result?['min_germination_temperature_c'],
+      maxGerminationTemperatureC: result?['max_germination_temperature_c'],
+      growingInstructions: result?['growing_instructions'],
+      stratificationRequired: result?['stratification_required'],
+      pinchingRequired: result?['pinching_required'],
+      minHeightCm: result?['min_height_cm'],
+      maxHeightCm: result?['max_height_cm'],
+      minSpacingCm: result?['min_spacing_cm'],
+      maxSpacingCm: result?['max_spacing_cm'],
+      minGerminationDays: result?['min_germination_days'],
+      maxGerminationDays: result?['max_germination_days'],
+      minTransplantDays: result?['min_transplant_days'],
+      maxTransplantDays: result?['max_transplant_days'],
+      minFlowerFruitDays: result?['min_flower_fruit_days'],
+      maxFlowerFruitDays: result?['max_flower_fruit_days'],
       lifeCycleUuid: result?['life_cycle_uuid'],
       imageId: null,
     );

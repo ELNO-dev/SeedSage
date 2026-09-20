@@ -68,9 +68,7 @@ class _SeedListState extends State<SeedList> {
 
   Future<void> _loadSeedTypes() async {
     try {
-      final seeds = await _seedTypeListService.getSeedTypes(
-        const SeedTypeListQuery(),
-      );
+      final seeds = await _seedTypeListService.getSeedTypes(const SeedTypeListQuery());
 
       if (!mounted) return;
 
@@ -151,11 +149,9 @@ class _SeedListState extends State<SeedList> {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => SeedDetail(seedTypeUuid: seed.seedTypeUuid),
-            ),
-          );
+          await Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => SeedDetail(seedTypeUuid: seed.seedTypeUuid)));
           await _loadSeedTypes();
         },
         child: Container(
@@ -165,32 +161,18 @@ class _SeedListState extends State<SeedList> {
             color: Colors.white.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.10),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 6, offset: const Offset(0, 2)),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                seed.commonName,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(seed.commonName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               if (hasVariant) ...[
                 const SizedBox(height: 2),
                 Text(
                   seed.variant!,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                    color: Color(0xFF77706E),
-                  ),
+                  style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Color(0xFF77706E)),
                 ),
               ],
             ],
@@ -201,9 +183,7 @@ class _SeedListState extends State<SeedList> {
   }
 
   Widget _buildStatusExpansion(ElnoMdOption status) {
-    final matchingSeeds = _filteredSeeds
-        .where((seed) => seed.statusUuid == status.uuid)
-        .toList();
+    final matchingSeeds = _filteredSeeds.where((seed) => seed.statusUuid == status.uuid).toList();
 
     return Stack(
       alignment: Alignment.topCenter,
@@ -223,11 +203,7 @@ class _SeedListState extends State<SeedList> {
                 padding: EdgeInsets.only(left: 24, right: 24, bottom: 10),
                 child: Text(
                   'No seeds',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                    color: Color(0xFFA7A19F),
-                  ),
+                  style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Color(0xFFA7A19F)),
                 ),
               ),
           ],
@@ -238,9 +214,7 @@ class _SeedListState extends State<SeedList> {
           left: 0,
           right: 0,
           child: IgnorePointer(
-            child: Center(
-              child: ElnoSectionHeader(headerString: status.displayValue),
-            ),
+            child: Center(child: ElnoSectionHeader(headerString: status.displayValue)),
           ),
         ),
       ],
@@ -256,21 +230,14 @@ class _SeedListState extends State<SeedList> {
           color: const Color(0xFFFBD5DC).withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.20),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.20), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(
           children: [
             Text(label, textAlign: TextAlign.center),
             const SizedBox(height: 1),
-            Text(
-              count.toString(),
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            Text(count.toString(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -297,10 +264,7 @@ class _SeedListState extends State<SeedList> {
                     right: 0,
                     bottom: 0,
                     height: 30,
-                    child: Image.asset(
-                      'assets/icons/search_flourish.png',
-                      fit: BoxFit.fitWidth,
-                    ),
+                    child: Image.asset('assets/icons/search_flourish.png', fit: BoxFit.fitWidth),
                   ),
                   TextField(
                     onChanged: (value) {
@@ -310,16 +274,8 @@ class _SeedListState extends State<SeedList> {
                     },
                     decoration: const InputDecoration(
                       hintText: 'Find a seed...',
-                      hintStyle: TextStyle(
-                        fontSize: 14,
-                        fontStyle: FontStyle.italic,
-                        color: Color(0xFFA7A19F),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        size: 20,
-                        color: Color(0xFFA7A19F),
-                      ),
+                      hintStyle: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Color(0xFFA7A19F)),
+                      prefixIcon: Icon(Icons.search, size: 20, color: Color(0xFFA7A19F)),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -347,28 +303,19 @@ class _SeedListState extends State<SeedList> {
 
           const SizedBox(height: 4),
 
-          Opacity(
-            opacity: 0.4,
-            child: Image.asset(
-              'assets/images/frills/long_frill.png',
-              fit: BoxFit.fitWidth,
-            ),
-          ),
+          Opacity(opacity: 0.4, child: Image.asset('assets/images/frills/long_frill.png', fit: BoxFit.fitWidth)),
 
           ..._statuses.map((status) => _buildStatusExpansion(status)),
         ],
       ),
       floatingActionButton: ElnoFab(
         fabIcon: LucideIcons.pencil100,
-        backgroundColor: const Color(0xFFF6C3D3),
         actions: [
           ElnoFabAction(
             label: 'Add a seed type',
-
+            fabActionIcon: LucideIcons.sprout,
             onSelected: () async {
-              await Navigator.of(pageContext).push(
-                MaterialPageRoute(builder: (context) => const AddSeedType()),
-              );
+              await Navigator.of(pageContext).push(MaterialPageRoute(builder: (context) => const AddSeedType()));
               await _loadSeedTypes();
             },
           ),

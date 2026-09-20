@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
+import 'package:seedsage/models/images.dart';
 import 'package:seedsage/models/seed_type.dart';
+import 'package:seedsage/pages/seed_type_image_select.dart';
 import '../config/app_config.dart';
 import 'main_menu.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../services/seed_type_crud_service.dart';
+import '../services/img_crud_service.dart';
+import 'dart:typed_data';
 
 class SeedDetail extends StatefulWidget {
   final String seedTypeUuid;
@@ -33,6 +36,7 @@ class _SeedDetailState extends State<SeedDetail> {
   final TextEditingController _maxTransDayController = TextEditingController();
   final TextEditingController _minFruitDayController = TextEditingController();
   final TextEditingController _maxFruitDayController = TextEditingController();
+  final ImgCrudService _imgCrudService = ImgCrudService();
   final SeedTypeService _seedTypeService = SeedTypeService();
   dynamic _lifeCycle;
   List<ElnoMdOption> _lifeCycleOptions = [];
@@ -48,18 +52,21 @@ class _SeedDetailState extends State<SeedDetail> {
     _loadPageData();
   }
 
-  //final String _tmpUUID = '6c63621d-5e80-47a5-a5d8-6a9631f0f55f';
   Map<String, dynamic>? seedType;
   bool _isSaving = false;
   String? _lifeCycleDisplay;
   bool _stratificationRequired = false;
   bool _pinchingRequired = false;
+  String? _storagePath;
+  String? _selectedImage;
+  Img? _newSelectedImage;
 
   // Helper to make the sequence run in series not parallel
   Future<void> _loadPageData() async {
     await _loadInitialSeedType();
     await _loadLifeCycleOptions();
     await _loadLifeCycleDisplay();
+    await _imageBytes();
   }
 
   // Helper to get the name
@@ -67,6 +74,7 @@ class _SeedDetailState extends State<SeedDetail> {
     final initialSeedType = await _seedTypeService.readSeedTypeDetail(widget.seedTypeUuid);
 
     if (!mounted) return;
+    // debugPrint('Seed returned: ${initialSeedType.commonName}');
 
     setState(() {
       _commonNameController.text = initialSeedType.commonName;
@@ -95,7 +103,7 @@ class _SeedDetailState extends State<SeedDetail> {
   // Helper for md values
   Future<void> _loadLifeCycleDisplay() async {
     // debugPrint('LIFECYCLE HELPER FIRED');
-    debugPrint(_lifeCycle?.toString());
+    // debugPrint(_lifeCycle?.toString());
     if (_lifeCycle == null) return;
     final getDisplayValue = await _mdGetService.getMdDisplayValue(_lifeCycle);
 
@@ -103,9 +111,26 @@ class _SeedDetailState extends State<SeedDetail> {
 
     setState(() {
       _lifeCycleDisplay = getDisplayValue;
+      _selectedImage = null;
     });
-    debugPrint(getDisplayValue);
-    debugPrint('lifeCycle: $_lifeCycle');
+    // debugPrint(getDisplayValue);
+    //debugPrint('lifeCycle: $_lifeCycle');
+  }
+
+  // Helper to get image bytes
+  Future<void> _imageBytes() async {
+    final selectedImage = await _imgCrudService.getImagesByObjectandType(
+      widget.seedTypeUuid,
+      'f51c8a56-bdf6-46c5-b53a-0c53ae82310c',
+    );
+    debugPrint('got an image returned: $selectedImage');
+    if (!mounted) return;
+    debugPrint('Seed image returned: $selectedImage');
+
+    setState(() {
+      _storagePath = selectedImage?.storagePath;
+    });
+    debugPrint('got an image returned: $_storagePath from ${widget.seedTypeUuid}');
   }
 
   // Helper for lifecycle options
@@ -144,6 +169,50 @@ class _SeedDetailState extends State<SeedDetail> {
                     Opacity(
                       opacity: 0.4,
                       child: Image.asset('assets/images/frills/border_v1.png', fit: BoxFit.contain),
+                    ),
+                    Positioned(
+                      top: 40,
+                      left: 180,
+                      child: InkWell(
+                        onTap: () async {
+                          final selectedImage = await Navigator.of(
+                            pageContext,
+                          ).push<Img>(MaterialPageRoute(builder: (context) => const SearchSeedImage()));
+                          if (selectedImage == null) return;
+                          setState(() {
+                            _newSelectedImage = selectedImage;
+                            _storagePath = selectedImage.storagePath;
+                          });
+                        },
+                        child: SizedBox(
+                          height: 180,
+                          child: _storagePath == null
+                              ? const Center(
+                                  child: Text(
+                                    'Click here to select an image...',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                      color: Color(0xFFA7A19F),
+                                    ),
+                                  ),
+                                )
+                              : FutureBuilder<Uint8List>(
+                                  future: _imgCrudService.getImage(_storagePath!),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasError) {
+                                      return const Icon(Icons.error);
+                                    }
+
+                                    if (!snapshot.hasData) {
+                                      return const Center(child: CircularProgressIndicator());
+                                    }
+
+                                    return Image.memory(snapshot.data!, fit: BoxFit.contain);
+                                  },
+                                ),
+                        ),
+                      ),
                     ),
                     Positioned(
                       top: 32,
@@ -393,6 +462,11 @@ class _SeedDetailState extends State<SeedDetail> {
 
                 try {
                   await _seedTypeService.updateSeedType(updatedSeedType);
+                  debugPrint('SAVING IMAGE: ${_newSelectedImage?.imageObjectUuid}');
+                  if (_newSelectedImage != null) {
+                    await _imgCrudService.updateImageLink(widget.seedTypeUuid, _newSelectedImage!.imageObjectUuid);
+                  }
+
                   if (!pageContext.mounted) return;
                 } catch (error) {
                   // Ellen fucked up
@@ -412,9 +486,9 @@ class _SeedDetailState extends State<SeedDetail> {
       ),
       floatingActionButton: ElnoFab(
         fabIcon: LucideIcons.pencil100,
-        backgroundColor: const Color(0xFFF6C3D3),
         actions: [
           ElnoFabAction(
+            fabActionIcon: LucideIcons.trash,
             label: 'Delete seed type',
 
             onSelected: () async {
