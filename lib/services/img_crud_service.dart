@@ -78,4 +78,12 @@ class ImgCrudService {
 
     debugPrint('IMAGE UPDATE RESPONSE: $response');
   }
+
+  Future<void> createImageLink(String objectUuid, String imageObjectUuid) async {
+    await _supabase.from('img_object_link').insert({'image_object_uuid': imageObjectUuid, 'object_uuid': objectUuid});
+  }
+
+  Future<void> deleteImageLink(String objectUuid) async {
+    await _supabase.from('img_object_link').delete().eq('object_uuid', objectUuid);
+  }
 }

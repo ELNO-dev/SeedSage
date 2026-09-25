@@ -408,7 +408,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
                     ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be created, please try again later'));
                     return;
                   }
-                  print('SELECTED IMAGE UUID: ${_selectedImage?.imageObjectUuid}');
+
                   final seedType = SeedType(
                     seedTypeObjectUuid: objectUuid,
                     commonName: _commonNameController.text.trim(),

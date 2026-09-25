@@ -11,6 +11,7 @@ class SeedTypeService {
 
   // Create a seed type using submitted attributes
   Future<void> createSeedType(SeedType seedType) async {
+    await _supabase.from('obj_seed_type').insert({});
     await _supabase.from('obj_seed_type').insert({
       'seed_type_object_uuid': seedType.seedTypeObjectUuid,
       'common_name': seedType.commonName,

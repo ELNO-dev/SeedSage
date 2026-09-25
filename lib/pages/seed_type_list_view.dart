@@ -248,6 +248,7 @@ class _SeedListState extends State<SeedList> {
   Widget build(BuildContext pageContext) {
     return ElnoPageLayout(
       appConfig: appConfig,
+      showBackButton: true,
       mainMenu: MainMenu(appConfig: appConfig),
       pageContent: Column(
         children: [
