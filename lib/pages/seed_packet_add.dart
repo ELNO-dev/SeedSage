@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
-import 'package:seedsage/models/seed_packet.dart';
-import '../config/app_config.dart';
-import 'package:seedsage/services/seed_packet_crud_service.dart';
-import 'package:seedsage/services/object_CRUD_service.dart';
+import 'package:seedsage/seed_sage.dart';
 
 class AddSeedPacket extends StatefulWidget {
   final String seedTypeUuid;
-  const AddSeedPacket({super.key, required this.seedTypeUuid});
+  final String commonName;
+  final String? variety;
+  final String? botanicalName;
+  final String? storagePath;
+
+  const AddSeedPacket({
+    super.key,
+    required this.seedTypeUuid,
+    required this.commonName,
+    this.variety,
+    this.botanicalName,
+    this.storagePath,
+  });
 
   @override
   State<AddSeedPacket> createState() => _AddSeedPacket();
@@ -18,12 +27,10 @@ class _AddSeedPacket extends State<AddSeedPacket> {
   final TextEditingController _initialSeedQuantity = TextEditingController();
   final TextEditingController _purchasedDateController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final ObjectCrudService _objectService = ObjectCrudService();
-  final SeedPacketService _seedPacketService = SeedPacketService();
+  final SeedPacketProcessService _seedPacketProcessService = SeedPacketProcessService();
   DateTime? _purchaseDate;
   final DateTime defaultDate = DateTime.now();
   bool _isSaving = false;
-  final String _seedPacketObjectTypeUuid = '4ef66b41-51e1-4ac1-80c9-2031246258c9';
 
   void _clearForm() {
     _source.clear();
@@ -53,6 +60,13 @@ class _AddSeedPacket extends State<AddSeedPacket> {
         key: _formKey,
         child: Column(
           children: [
+            SeedTypeCard(
+              commonName: widget.commonName,
+              variant: widget.variety,
+              botanicalName: widget.botanicalName,
+              storagePath: widget.storagePath,
+              allowImageChange: false,
+            ),
             const SizedBox(height: 32),
             ElnoSectionHeader(headerString: 'Seed packet details'),
             const SizedBox(height: 12),
@@ -68,6 +82,8 @@ class _AddSeedPacket extends State<AddSeedPacket> {
               labelText: 'Purchased Date',
               requiredField: true,
               value: _purchaseDate,
+              minDate: DateTime(1900),
+              maxDate: DateTime.now(),
               controller: _purchasedDateController,
               defaultDate: defaultDate,
               onDtChanged: (newValue) {
@@ -83,56 +99,45 @@ class _AddSeedPacket extends State<AddSeedPacket> {
               intController: _initialSeedQuantity,
               requiredField: false,
             ),
+            const SizedBox(height: 36),
             ElevatedButton(
               style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
               onPressed: () async {
                 final isValid = _formKey.currentState!.validate();
 
+                if (!isValid) return;
+
                 setState(() {
                   _isSaving = true;
                 });
-                if (!isValid) {
-                  setState(() {
-                    _isSaving = false;
-                  });
-                  return;
-                }
-                if (isValid) {
-                  String? objectUuid;
-                  try {
-                    objectUuid = await _objectService.createObjectfromType(_seedPacketObjectTypeUuid);
-                    debugPrint('Seed packet UUID: $objectUuid');
-                    if (!pageContext.mounted) return;
-                  } catch (error) {
-                    if (!pageContext.mounted) return;
-                    ScaffoldMessenger.of(pageContext).showSnackBar(
-                      AppSnackBar.failed(message: 'Seed packet could not be created, please try again later'),
-                    );
-                    return;
-                  }
 
-                  final seedPacket = SeedPacket(
-                    seedPacketObjectUuid: objectUuid,
+                try {
+                  await _seedPacketProcessService.createSeedPacketWithInitialLot(
                     seedTypeUuid: widget.seedTypeUuid,
                     source: _source.text,
-                    purchaseDate: _purchaseDate,
+                    purchaseDate: _purchaseDate!,
                     initialSeedQuantity: int.tryParse(_initialSeedQuantity.text),
                   );
-                  try {
-                    await _objectService.createObjectfromType(_seedPacketObjectTypeUuid);
-                    debugPrint('Seed packet UUID: $objectUuid');
-                    if (!pageContext.mounted) return;
-                  } catch (error) {
-                    if (!pageContext.mounted) return;
-                    ScaffoldMessenger.of(pageContext).showSnackBar(
-                      AppSnackBar.failed(message: 'Seed packet could not be created, please try again later'),
-                    );
-                    return;
-                  }
+
+                  if (!mounted) return;
+
                   _clearForm();
+
                   setState(() {
                     _isSaving = false;
                   });
+                } catch (error) {
+                  debugPrint('CREATE SEED PACKET ERROR: $error');
+
+                  if (!mounted) return;
+
+                  setState(() {
+                    _isSaving = false;
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    AppSnackBar.failed(message: 'Seed packet could not be created, please try again later'),
+                  );
                 }
               },
               child: _isSaving

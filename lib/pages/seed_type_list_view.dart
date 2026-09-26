@@ -8,27 +8,6 @@ import '../models/seed_type_list_data.dart';
 import 'main_menu.dart';
 import '../services/seed_type_list_service.dart';
 
-// -----------------------------------------------------------------------------
-// SEED LIST VIEW - FUNCTIONAL TODO BEFORE MAKING IT PRETTY
-// -----------------------------------------------------------------------------
-//
-//
-//
-
-// 6. LOADING + ERROR HANDLING
-//    - Show something while seed data is loading.
-//    - Show a user-friendly message if loading fails.
-//    - Allow the user to retry.
-//
-// 7. EMPTY ACCOUNT
-//    - Handle a user with zero seed types.
-//    - Give them an obvious route to Add Seed Type.
-//
-// -----------------------------------------------------------------------------
-// WHEN ALL OF THE ABOVE WORKS:
-// STOP FUNCTIONAL DEVELOPMENT AND MAKE THE BITCH PRETTY.
-// -----------------------------------------------------------------------------
-
 class SeedList extends StatefulWidget {
   const SeedList({super.key});
 
@@ -117,28 +96,12 @@ class _SeedListState extends State<SeedList> {
 
   int get _sownCount {
     final notSownStatus = _findStatusByName('Not sown');
-    final doneStatus = _findStatusByName('Done');
-    final lostStatus = _findStatusByName('Lost');
 
-    return _seeds.where((seed) {
-      if (seed.statusUuid == null) {
-        return false;
-      }
+    if (notSownStatus == null) {
+      return 0;
+    }
 
-      if (notSownStatus != null && seed.statusUuid == notSownStatus.uuid) {
-        return false;
-      }
-
-      if (doneStatus != null && seed.statusUuid == doneStatus.uuid) {
-        return false;
-      }
-
-      if (lostStatus != null && seed.statusUuid == lostStatus.uuid) {
-        return false;
-      }
-
-      return true;
-    }).length;
+    return _seeds.where((seed) => seed.statusUuid != null && seed.statusUuid != notSownStatus.uuid).length;
   }
 
   Widget _buildSeedCard(SeedTypeListData seed) {

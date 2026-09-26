@@ -11,7 +11,6 @@ class SeedTypeService {
 
   // Create a seed type using submitted attributes
   Future<void> createSeedType(SeedType seedType) async {
-    await _supabase.from('obj_seed_type').insert({});
     await _supabase.from('obj_seed_type').insert({
       'seed_type_object_uuid': seedType.seedTypeObjectUuid,
       'common_name': seedType.commonName,
@@ -35,7 +34,7 @@ class SeedTypeService {
       'max_flower_fruit_days': seedType.maxFlowerFruitDays,
       'life_cycle_uuid': seedType.lifeCycleUuid,
     });
-    print('SERVICE IMAGE ID: ${seedType.imageId}');
+
     if (seedType.imageId != null) {
       try {
         await _supabase.from('img_object_link').insert({
@@ -43,7 +42,6 @@ class SeedTypeService {
           'object_uuid': seedType.seedTypeObjectUuid,
         });
       } catch (e) {
-        print('IMAGE LINK ERROR: $e');
         rethrow;
       }
     }

@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'package:foundation/foundation.dart';
-import 'package:seedsage/models/seed_type.dart';
-import 'package:seedsage/services/evt_obj_crud_service.dart';
-import 'package:seedsage/services/object_CRUD_service.dart';
-import 'package:seedsage/services/seed_type_crud_service.dart';
-import '../config/app_config.dart';
-import 'seed_type_image_select.dart';
-import '../models/images.dart';
-import 'dart:typed_data';
-import '../services/img_crud_service.dart';
+
+import 'package:seedsage/seed_sage.dart';
 
 class AddSeedType extends StatefulWidget {
   const AddSeedType({super.key});
@@ -39,7 +33,6 @@ class _AddSeedTypeState extends State<AddSeedType> {
   final SeedTypeService _seedTypeService = SeedTypeService();
   final ObjectCrudService _objectService = ObjectCrudService();
   final EvtObjCrudService _evtObjCrudService = EvtObjCrudService();
-  final ImgCrudService _imgCrudService = ImgCrudService();
 
   void _clearForm() {
     _commonNameController.clear();
@@ -106,7 +99,6 @@ class _AddSeedTypeState extends State<AddSeedType> {
     setState(() {
       _lifeCycleOptions = options;
     });
-    // debugPrint('Life cycle option count: ${_lifeCycleOptions.length}');
   }
 
   @override
@@ -151,43 +143,18 @@ class _AddSeedTypeState extends State<AddSeedType> {
         child: Column(
           children: [
             const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: InkWell(
-                onTap: () async {
-                  final selectedImage = await Navigator.of(
-                    pageContext,
-                  ).push<Img>(MaterialPageRoute(builder: (context) => const SearchSeedImage()));
 
-                  setState(() {
-                    _selectedImage = selectedImage;
-                  });
-                },
-                child: SizedBox(
-                  height: 200,
-                  child: _selectedImage == null
-                      ? const Center(
-                          child: Text(
-                            'Click here to select an image...',
-                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Color(0xFFA7A19F)),
-                          ),
-                        )
-                      : FutureBuilder<Uint8List>(
-                          future: _imgCrudService.getImage(_selectedImage!.storagePath),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasError) {
-                              return const Icon(Icons.error);
-                            }
-
-                            if (!snapshot.hasData) {
-                              return const Center(child: CircularProgressIndicator());
-                            }
-
-                            return Image.memory(snapshot.data!, fit: BoxFit.contain);
-                          },
-                        ),
-                ),
-              ),
+            SeedTypeCard(
+              commonName: _commonNameController.text,
+              variant: _varietyController.text,
+              botanicalName: _botanicalNameController.text,
+              storagePath: _selectedImage?.storagePath,
+              allowImageChange: true,
+              onImageChanged: (selectedImage) {
+                setState(() {
+                  _selectedImage = selectedImage;
+                });
+              },
             ),
 
             const SizedBox(height: 32),
@@ -454,9 +421,6 @@ class _AddSeedTypeState extends State<AddSeedType> {
                       pageContext,
                     ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be created, please try again later'));
                   }
-
-                  debugPrint('SEED TYPE CREATED - ');
-                  debugPrint(_lifeCycle);
 
                   _clearForm();
                   setState(() {

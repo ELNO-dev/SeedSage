@@ -70,13 +70,11 @@ class ImgCrudService {
   }
 
   Future<void> updateImageLink(String objectUuid, String imageObjectUuid) async {
-    final response = await _supabase
+    await _supabase
         .from('img_object_link')
         .update({'image_object_uuid': imageObjectUuid})
         .eq('object_uuid', objectUuid)
         .select();
-
-    debugPrint('IMAGE UPDATE RESPONSE: $response');
   }
 
   Future<void> createImageLink(String objectUuid, String imageObjectUuid) async {

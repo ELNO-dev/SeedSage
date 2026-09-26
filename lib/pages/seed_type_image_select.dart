@@ -25,7 +25,8 @@ class _SearchSeedImageState extends State<SearchSeedImage> {
 
   Future<void> _loadImages() async {
     final loadedImages = await _imgCrudService.getImagesByType('f51c8a56-bdf6-46c5-b53a-0c53ae82310c');
-    debugPrint('IMAGES LOADED: ${loadedImages.length}');
+
+    if (!mounted) return;
     setState(() {
       _images = loadedImages;
     });
