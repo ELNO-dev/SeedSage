@@ -5,11 +5,11 @@ import 'package:flutter/foundation.dart';
 class SeedPacketService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Delete a seed packet based on a submitted UUID
-  Future<void> deleteSeedPacket(String seedPacketUuid) async {
-    // ELLEN: deletion order must handle child lots before deleting parent obj_object.
-    await _supabase.from('obj_seed_packet').delete().eq('seed_packet_object_uuid', seedPacketUuid);
-  }
+  // DELETE RULE:
+  // 1. obj_object deletion cascades to records dependent on that object.
+  // 2. Database cascade never deletes another obj_object.
+  // 3. Child obj_object records are explicitly deleted by the process service.
+  // 4. Deletion never cascades upward to a parent.
 
   // Create a seed packet using submitted attributes
   Future<void> createSeedPacket(SeedPacket seedPacket) async {
@@ -58,5 +58,28 @@ class SeedPacketService {
         initialSeedQuantity: row['initial_seed_quantity'],
       );
     }).toList();
+  }
+
+  // Get packet from seed
+  Future<List<String>> getSeedPacketObjectUuidsBySeedType(String seedTypeUuid) async {
+    final response = await _supabase
+        .from('obj_seed_packet')
+        .select('seed_packet_object_uuid')
+        .eq('seed_type_uuid', seedTypeUuid);
+
+    return response.map<String>((row) => row['seed_packet_object_uuid'] as String).toList();
+  }
+
+  // Update a seed packet using submitted attributes based on the seed packet UUID
+  Future<void> updateSeedPacket(SeedPacket seedPacket) async {
+    await _supabase
+        .from('obj_seed_packet')
+        .update({
+          'source': seedPacket.source,
+          'purchase_date': seedPacket.purchaseDate?.toIso8601String().split('T').first,
+          'initial_seed_quantity': seedPacket.initialSeedQuantity,
+        })
+        .eq('seed_packet_object_uuid', seedPacket.seedPacketObjectUuid);
+    ;
   }
 }

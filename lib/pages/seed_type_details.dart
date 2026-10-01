@@ -55,6 +55,7 @@ class _SeedDetailState extends State<SeedDetail> {
   final SeedTypeService _seedTypeService = SeedTypeService();
 
   final SeedPacketService _seedPacketService = SeedPacketService();
+  final SeedTypeProcessService _seedTypeProcessService = SeedTypeProcessService();
 
   dynamic _lifeCycle;
 
@@ -614,16 +615,11 @@ class _SeedDetailState extends State<SeedDetail> {
 
                   ElnoMdInput(
                     labelText: 'Life cycle',
-
                     options: _lifeCycleOptions,
-
                     hintText: _lifeCycleDisplay,
-
                     value: _lifeCycle,
-
                     onChanged: (newValue) {
                       setChanged(newValue.toString());
-
                       setState(() {
                         _lifeCycle = newValue;
                       });
@@ -907,7 +903,7 @@ class _SeedDetailState extends State<SeedDetail> {
                 }
 
                 try {
-                  await _seedTypeService.deleteSeedType(widget.seedTypeUuid);
+                  await _seedTypeProcessService.deleteSeedType(widget.seedTypeUuid);
 
                   if (!pageContext.mounted) return;
 

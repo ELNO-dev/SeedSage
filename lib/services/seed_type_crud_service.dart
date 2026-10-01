@@ -4,10 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SeedTypeService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Delete a seed type based on a submitted UUID
-  Future<void> deleteSeedType(String seedTypeUuid) async {
-    await _supabase.from('obj_seed_type').delete().eq('seed_type_object_uuid', seedTypeUuid);
-  }
+  // DELETE RULE:
+  // 1. obj_object deletion cascades to records dependent on that object.
+  // 2. Database cascade never deletes another obj_object.
+  // 3. Child obj_object records are explicitly deleted by the process service.
+  // 4. Deletion never cascades upward to a parent.
 
   // Create a seed type using submitted attributes
   Future<void> createSeedType(SeedType seedType) async {

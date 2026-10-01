@@ -55,84 +55,110 @@ class _SeedTypeCardState extends State<SeedTypeCard> {
       child: Container(
         width: double.infinity,
         alignment: Alignment.topCenter,
-        child: Stack(
-          children: [
-            Opacity(opacity: 0.4, child: Image.asset('assets/images/frills/border_v1.png', fit: BoxFit.contain)),
-            Positioned(
-              top: 40,
-              left: 170,
-              child: InkWell(
-                onTap: widget.allowImageChange
-                    ? () async {
-                        final selectedImage = await Navigator.of(
-                          context,
-                        ).push<Img>(MaterialPageRoute(builder: (context) => const SearchSeedImage()));
-
-                        if (selectedImage == null) return;
-
-                        setState(() {
-                          _storagePath = selectedImage.storagePath;
-                        });
-
-                        widget.onImageChanged?.call(selectedImage);
-                      }
-                    : null,
-                child: SizedBox(
-                  height: 150,
-                  width: 150,
-                  child: _storagePath == null && widget.allowImageChange
-                      ? const Center(
-                          child: Text(
-                            'Click here to select an image...',
-                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Color(0xFFA7A19F)),
-                          ),
-                        )
-                      : _storagePath == null && !widget.allowImageChange
-                      ? const Center(
-                          child: Text(
-                            'No image selected',
-                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Color(0xFFA7A19F)),
-                          ),
-                        )
-                      : FutureBuilder<Uint8List>(
-                          future: _imgCrudService.getImage(_storagePath!),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasError) {
-                              return const Icon(Icons.error);
-                            }
-
-                            if (!snapshot.hasData) {
-                              return const Center(child: CircularProgressIndicator());
-                            }
-
-                            return Image.memory(snapshot.data!, fit: BoxFit.contain);
-                          },
-                        ),
+        child: AspectRatio(
+          aspectRatio: 1.254,
+          child: Stack(
+            children: [
+              Container(
+                padding: EdgeInsets.all(0.8),
+                child: Opacity(
+                  opacity: 0.4,
+                  child: Image.asset('assets/images/frills/border_v1.png', fit: BoxFit.contain),
                 ),
               ),
-            ),
-            Positioned(
-              top: 32,
-              left: 32,
-              child: Text(
-                toTitleCase(widget.commonName),
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      padding: EdgeInsets.fromLTRB(30, 30, 5, 30),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            toTitleCase(widget.commonName),
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                          ),
+                          SizedBox(height: 12),
+                          Text(toTitleCase(widget.variant ?? ''), style: const TextStyle(fontSize: 18)),
+                          Spacer(),
+                          Text(
+                            toTitleCase(widget.botanicalName ?? ''),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w300,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      padding: EdgeInsets.fromLTRB(0, 5, 25, 5),
+                      child: Center(
+                        child: InkWell(
+                          onTap: widget.allowImageChange
+                              ? () async {
+                                  final selectedImage = await Navigator.of(
+                                    context,
+                                  ).push<Img>(MaterialPageRoute(builder: (context) => const SearchSeedImage()));
+
+                                  if (selectedImage == null) return;
+
+                                  setState(() {
+                                    _storagePath = selectedImage.storagePath;
+                                  });
+
+                                  widget.onImageChanged?.call(selectedImage);
+                                }
+                              : null,
+                          child: _storagePath == null && widget.allowImageChange
+                              ? const Center(
+                                  child: Text(
+                                    'Click here to select an image...',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                      color: Color(0xFFA7A19F),
+                                    ),
+                                  ),
+                                )
+                              : _storagePath == null && !widget.allowImageChange
+                              ? const Center(
+                                  child: Text(
+                                    'No image selected',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                      color: Color(0xFFA7A19F),
+                                    ),
+                                  ),
+                                )
+                              : FutureBuilder<Uint8List>(
+                                  future: _imgCrudService.getImage(_storagePath!),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasError) {
+                                      return const Icon(Icons.error);
+                                    }
+
+                                    if (!snapshot.hasData) {
+                                      return const Center(child: CircularProgressIndicator());
+                                    }
+
+                                    return Image.memory(snapshot.data!, fit: BoxFit.contain);
+                                  },
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Positioned(
-              top: 62,
-              left: 32,
-              child: Text(toTitleCase(widget.variant ?? ''), style: const TextStyle(fontSize: 20)),
-            ),
-            Positioned(
-              top: 104,
-              left: 32,
-              child: Text(
-                toTitleCase(widget.botanicalName ?? ''),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w300, fontStyle: FontStyle.italic),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
