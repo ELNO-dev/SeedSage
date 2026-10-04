@@ -30,11 +30,9 @@ class _AddSeedTypeState extends State<AddSeedType> {
   final TextEditingController _minFruitDayController = TextEditingController();
   final TextEditingController _maxFruitDayController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final SeedTypeService _seedTypeService = SeedTypeService();
-  final ObjectCrudService _objectService = ObjectCrudService();
-  final EvtObjCrudService _evtObjCrudService = EvtObjCrudService();
+  final SeedTypeProcessService _seedTypeProcessService = SeedTypeProcessService();
 
-  void _clearForm() {
+  /*void _clearForm() {
     _commonNameController.clear();
     _varietyController.clear();
     _botanicalNameController.clear();
@@ -61,7 +59,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
     });
 
     _formKey.currentState?.reset();
-  }
+  }*/
 
   final ElnoMdCrudService _mdService = ElnoMdCrudService();
   bool _stratificationRequired = false;
@@ -69,29 +67,8 @@ class _AddSeedTypeState extends State<AddSeedType> {
   String? _lifeCycle;
   List<ElnoMdOption> _lifeCycleOptions = [];
   Img? _selectedImage;
-  String? _seedTypeObjectTypeUuid;
-  String? _seedTypeObjectStatusUuid;
+
   bool _isSaving = false;
-
-  Future<void> _loadSeedTypeObjectType() async {
-    final options = await _mdService.getMdOptionsByType('OBJ_OBJECT_TYPE');
-
-    final seedTypeOption = options.firstWhere((option) => option.valueCode == 'OBJ_OBJECT_TYPE_SEED_TYPE');
-
-    setState(() {
-      _seedTypeObjectTypeUuid = seedTypeOption.uuid;
-    });
-  }
-
-  Future<void> _loadSeedTypeStatus() async {
-    final options = await _mdService.getMdOptionsByType('OBJ_STATUS');
-
-    final seedTypeStatus = options.firstWhere((option) => option.valueCode == 'OBJ_STATUS_NOT_SOWN');
-
-    setState(() {
-      _seedTypeObjectStatusUuid = seedTypeStatus.uuid;
-    });
-  }
 
   Future<void> _testLifeCycleLoad() async {
     final options = await _mdService.getMdOptionsByType('OBJ_SEED_TYPE_LIFE_CYCLE');
@@ -105,8 +82,6 @@ class _AddSeedTypeState extends State<AddSeedType> {
   void initState() {
     super.initState();
     _testLifeCycleLoad();
-    _loadSeedTypeObjectType();
-    _loadSeedTypeStatus();
   }
 
   @override
@@ -363,10 +338,33 @@ class _AddSeedTypeState extends State<AddSeedType> {
                   });
                   return;
                 }
+                final seedType = SeedType(
+                  commonName: _commonNameController.text.trim(),
+                  variant: _varietyController.text.trim(),
+                  botanicalName: _botanicalNameController.text.trim(),
+                  description: _descriptionController.text.trim(),
+                  minGerminationTemperatureC: int.tryParse(_minGermController.text),
+                  maxGerminationTemperatureC: int.tryParse(_maxGermController.text),
+                  growingInstructions: _growingInstController.text.trim(),
+                  minHeightCm: int.tryParse(_minHeightController.text),
+                  maxHeightCm: int.tryParse(_maxHeightController.text),
+                  minSpacingCm: int.tryParse(_minSpaceController.text),
+                  maxSpacingCm: int.tryParse(_maxSpaceController.text),
+                  stratificationRequired: _stratificationRequired,
+                  pinchingRequired: _pinchingRequired,
+                  minGerminationDays: int.tryParse(_minGermDayController.text),
+                  maxGerminationDays: int.tryParse(_maxGermDayController.text),
+                  minTransplantDays: int.tryParse(_minTransDayController.text),
+                  maxTransplantDays: int.tryParse(_maxTransDayController.text),
+                  minFlowerFruitDays: int.tryParse(_minFruitDayController.text),
+                  maxFlowerFruitDays: int.tryParse(_maxFruitDayController.text),
+                  lifeCycleUuid: _lifeCycle,
+                  imageId: _selectedImage?.imageObjectUuid,
+                );
+
                 if (isValid) {
-                  String? objectUuid;
                   try {
-                    objectUuid = await _objectService.createObjectfromType(_seedTypeObjectTypeUuid!);
+                    await _seedTypeProcessService.createSeedType(seedType: seedType);
                     if (!pageContext.mounted) return;
                   } catch (error) {
                     if (!pageContext.mounted) return;
@@ -376,56 +374,7 @@ class _AddSeedTypeState extends State<AddSeedType> {
                     return;
                   }
 
-                  final seedType = SeedType(
-                    seedTypeObjectUuid: objectUuid,
-                    commonName: _commonNameController.text.trim(),
-                    variant: _varietyController.text.trim(),
-                    botanicalName: _botanicalNameController.text.trim(),
-                    description: _descriptionController.text.trim(),
-                    minGerminationTemperatureC: int.tryParse(_minGermController.text),
-                    maxGerminationTemperatureC: int.tryParse(_maxGermController.text),
-                    growingInstructions: _growingInstController.text.trim(),
-                    minHeightCm: int.tryParse(_minHeightController.text),
-                    maxHeightCm: int.tryParse(_maxHeightController.text),
-                    minSpacingCm: int.tryParse(_minSpaceController.text),
-                    maxSpacingCm: int.tryParse(_maxSpaceController.text),
-                    stratificationRequired: _stratificationRequired,
-                    pinchingRequired: _pinchingRequired,
-                    minGerminationDays: int.tryParse(_minGermDayController.text),
-                    maxGerminationDays: int.tryParse(_maxGermDayController.text),
-                    minTransplantDays: int.tryParse(_minTransDayController.text),
-                    maxTransplantDays: int.tryParse(_maxTransDayController.text),
-                    minFlowerFruitDays: int.tryParse(_minFruitDayController.text),
-                    maxFlowerFruitDays: int.tryParse(_maxFruitDayController.text),
-                    lifeCycleUuid: _lifeCycle,
-                    imageId: _selectedImage?.imageObjectUuid,
-                  );
-
-                  try {
-                    await _seedTypeService.createSeedType(seedType);
-                    if (!pageContext.mounted) return;
-                  } catch (error) {
-                    if (!pageContext.mounted) return;
-                    ScaffoldMessenger.of(
-                      pageContext,
-                    ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be created, please try again later'));
-                  }
-
-                  try {
-                    await _evtObjCrudService.createEvtObj(objectUuid, _seedTypeObjectStatusUuid!);
-                    if (!pageContext.mounted) return;
-                    Navigator.pop(pageContext);
-                  } catch (error) {
-                    if (!pageContext.mounted) return;
-                    ScaffoldMessenger.of(
-                      pageContext,
-                    ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be created, please try again later'));
-                  }
-
-                  _clearForm();
-                  setState(() {
-                    _isSaving = false;
-                  });
+                  Navigator.pop(pageContext);
                 }
               },
               child: _isSaving

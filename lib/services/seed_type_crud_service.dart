@@ -10,7 +10,7 @@ class SeedTypeService {
   // 3. Child obj_object records are explicitly deleted by the process service.
   // 4. Deletion never cascades upward to a parent.
 
-  // Create a seed type using submitted attributes
+  // Create a seed type using submitted attributes including seed type uuid
   Future<void> createSeedType(SeedType seedType) async {
     await _supabase.from('obj_seed_type').insert({
       'seed_type_object_uuid': seedType.seedTypeObjectUuid,
@@ -48,6 +48,44 @@ class SeedTypeService {
     }
   }
 
+  // Create a seed type using submitted attributes including seed type uuid
+  Future<void> createSeedTypeNewUuid(SeedType seedType, String seedTypeUUID) async {
+    await _supabase.from('obj_seed_type').insert({
+      'seed_type_object_uuid': seedTypeUUID,
+      'common_name': seedType.commonName,
+      'variant': seedType.variant,
+      'botanical_name': seedType.botanicalName,
+      'description': seedType.description,
+      'min_germination_temperature_c': seedType.minGerminationTemperatureC,
+      'max_germination_temperature_c': seedType.maxGerminationTemperatureC,
+      'growing_instructions': seedType.growingInstructions,
+      'min_height_cm': seedType.minHeightCm,
+      'max_height_cm': seedType.maxHeightCm,
+      'min_spacing_cm': seedType.minSpacingCm,
+      'max_spacing_cm': seedType.maxSpacingCm,
+      'stratification_required': seedType.stratificationRequired,
+      'pinching_required': seedType.pinchingRequired,
+      'min_germination_days': seedType.minGerminationDays,
+      'max_germination_days': seedType.maxGerminationDays,
+      'min_transplant_days': seedType.minTransplantDays,
+      'max_transplant_days': seedType.maxTransplantDays,
+      'min_flower_fruit_days': seedType.minFlowerFruitDays,
+      'max_flower_fruit_days': seedType.maxFlowerFruitDays,
+      'life_cycle_uuid': seedType.lifeCycleUuid,
+    });
+
+    if (seedType.imageId != null) {
+      try {
+        await _supabase.from('img_object_link').insert({
+          'image_object_uuid': seedType.imageId,
+          'object_uuid': seedTypeUUID,
+        });
+      } catch (e) {
+        rethrow;
+      }
+    }
+  }
+
   // Update a seed type using submitted attributes based on the seed type UUID
   Future<void> updateSeedType(SeedType seedType) async {
     await _supabase
@@ -75,7 +113,7 @@ class SeedTypeService {
           'life_cycle_uuid': seedType.lifeCycleUuid,
           'image_id': seedType.imageId,
         })
-        .eq('seed_type_object_uuid', seedType.seedTypeObjectUuid);
+        .eq('seed_type_object_uuid', seedType.seedTypeObjectUuid!);
   }
 
   Future<SeedType> readSeedTypeDetail(String seedTypeUuid) async {

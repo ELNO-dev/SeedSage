@@ -4,43 +4,6 @@ class SeedDefinitions {
   // ===========================================================================
 
   // ---------------------------------------------------------------------------
-  // Germination Light Required
-  // OBJ_SEED_TYPE_GERMINATION_LIGHT
-  // ---------------------------------------------------------------------------
-
-  static const String objSeedTypeGerminationLightMdTypeUuid = 'b0b65d52-c311-483f-82b8-3cbe28c1fffe';
-
-  static const String objSeedTypeGerminationLightDarknessUuid = '7af5ed69-f2b4-4d0b-9032-6d1cc6b063fd';
-
-  static const String objSeedTypeGerminationLightLightUuid = 'e024cafd-f953-489e-b1d2-c23e01514e62';
-
-  // ---------------------------------------------------------------------------
-  // Life Cycle
-  // OBJ_SEED_TYPE_LIFE_CYCLE
-  // ---------------------------------------------------------------------------
-
-  static const String objSeedTypeLifeCycleMdTypeUuid = '29287fb3-1af0-420a-8837-e62dded344fe';
-
-  static const String objSeedTypeLifeCycleAnnualUuid = 'b577d049-a1b0-48e7-a3cc-809cdac0bb38';
-
-  static const String objSeedTypeLifeCycleBiennialUuid = 'a1d43293-af97-465e-bbb8-f386d62a1f32';
-
-  static const String objSeedTypeLifeCyclePerennialUuid = '283c9f0c-4836-4918-898b-67094d5eb90a';
-
-  // ---------------------------------------------------------------------------
-  // Plant Light Requirement
-  // OBJ_SEED_TYPE_PLANT_LIGHT_REQUIREMENT
-  // ---------------------------------------------------------------------------
-
-  static const String objSeedTypePlantLightRequirementMdTypeUuid = '28279c4b-a5c3-4a60-94cc-9b1776717c5d';
-
-  static const String objSeedTypePlantLightRequirementFullSunUuid = '328f8195-5bdd-43d8-9b3a-ec258e5e4b58';
-
-  static const String objSeedTypePlantLightRequirementPartSunUuid = '28c45823-ab3b-4d21-88e8-092a0ca46448';
-
-  static const String objSeedTypePlantLightRequirementFullShadeUuid = 'af305ff6-5ee8-4777-9827-8747e86f8619';
-
-  // ---------------------------------------------------------------------------
   // Object Type
   // OBJ_OBJECT_TYPE
   // ---------------------------------------------------------------------------
@@ -61,6 +24,9 @@ class SeedDefinitions {
   // Object Status
   // OBJ_STATUS
   // ---------------------------------------------------------------------------
+  static const String objectStatusMdType = 'OBJ_STATUS';
+
+  static const String objectEventsMdType = 'EVT_OBJ_EVENT_TYPE';
 
   static const String objStatusMdTypeUuid = '85f4a126-bb3e-46b0-8a3c-5f9b25d7ef87';
 
@@ -138,6 +104,8 @@ class SeedDefinitions {
   // TOTAL DEFINITIONS
   // ===========================================================================
 
+  static const String lotQuantityDef = '8adb0c5e-eb72-4df6-9b87-57321fff49fd';
+
   // ---------------------------------------------------------------------------
   // Seed Packet Totals
   // OBJ_OBJECT_TYPE_SEED_PACKET
@@ -174,4 +142,41 @@ class SeedDefinitions {
 
   /// Mature - INTEGER
   static const String objUserTotalMatureTotDefUuid = 'b33a5d41-1898-44fc-8a80-9bac2f959bc5';
+
+  // ---------------------------------------------------------------------------
+  // Germination Light Required
+  // OBJ_SEED_TYPE_GERMINATION_LIGHT
+  // ---------------------------------------------------------------------------
+
+  static const String objSeedTypeGerminationLightMdTypeUuid = 'b0b65d52-c311-483f-82b8-3cbe28c1fffe';
+
+  static const String objSeedTypeGerminationLightDarknessUuid = '7af5ed69-f2b4-4d0b-9032-6d1cc6b063fd';
+
+  static const String objSeedTypeGerminationLightLightUuid = 'e024cafd-f953-489e-b1d2-c23e01514e62';
+
+  // ---------------------------------------------------------------------------
+  // Life Cycle
+  // OBJ_SEED_TYPE_LIFE_CYCLE
+  // ---------------------------------------------------------------------------
+
+  static const String objSeedTypeLifeCycleMdTypeUuid = '29287fb3-1af0-420a-8837-e62dded344fe';
+
+  static const String objSeedTypeLifeCycleAnnualUuid = 'b577d049-a1b0-48e7-a3cc-809cdac0bb38';
+
+  static const String objSeedTypeLifeCycleBiennialUuid = 'a1d43293-af97-465e-bbb8-f386d62a1f32';
+
+  static const String objSeedTypeLifeCyclePerennialUuid = '283c9f0c-4836-4918-898b-67094d5eb90a';
+
+  // ---------------------------------------------------------------------------
+  // Plant Light Requirement
+  // OBJ_SEED_TYPE_PLANT_LIGHT_REQUIREMENT
+  // ---------------------------------------------------------------------------
+
+  static const String objSeedTypePlantLightRequirementMdTypeUuid = '28279c4b-a5c3-4a60-94cc-9b1776717c5d';
+
+  static const String objSeedTypePlantLightRequirementFullSunUuid = '328f8195-5bdd-43d8-9b3a-ec258e5e4b58';
+
+  static const String objSeedTypePlantLightRequirementPartSunUuid = '28c45823-ab3b-4d21-88e8-092a0ca46448';
+
+  static const String objSeedTypePlantLightRequirementFullShadeUuid = 'af305ff6-5ee8-4777-9827-8747e86f8619';
 }

@@ -10,6 +10,14 @@ class EvtObjCrudService {
       'event_date': DateTime.now().toIso8601String(),
     });
   }
+
+  Future<void> createEvtObjwithDate(String objectUuid, String objectStatusUuid, DateTime eventDate) async {
+    await _supabase.from('evt_obj').insert({
+      'object_uuid': objectUuid,
+      'event_type_uuid': objectStatusUuid,
+      'event_date': eventDate.toIso8601String().split('T').first,
+    });
+  }
 }
 // DELETE RULE:
 // 1. obj_object deletion cascades to records dependent on that object.

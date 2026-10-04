@@ -38,6 +38,8 @@ export 'services/seed_type_process_service.dart';
 export 'services/lot_crud_service.dart';
 export 'services/seed_packet_process_service.dart';
 export 'services/tot_crud_service.dart';
+export 'services/seed_icon_service.dart';
+export 'services/lot_processing_service.dart';
 
 // WIDGETS
 export 'widgets/search_widget.dart';

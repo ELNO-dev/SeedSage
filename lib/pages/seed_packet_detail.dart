@@ -32,15 +32,122 @@ class _SeedPacketState extends State<SeedPacketDetail> {
   DateTime? _purchaseDate;
   final DateTime defaultDate = DateTime.now();
   final SeedPacketService _seedPacketService = SeedPacketService();
+  final LotCrudService _lotCrudService = LotCrudService();
   final SeedPacketProcessService _seedPacketProcessService = SeedPacketProcessService();
   bool _hasChanged = false;
   bool _isSaving = false;
+  List<LotSummary> _lotSummaries = [];
 
   @override
   void initState() {
     super.initState();
     _loadInitialSeedPacket();
+    _loadlotSummaries();
   }
+
+  // Helper to get seed lot summaries
+  Future<void> _loadlotSummaries() async {
+    final latestLot = await _lotCrudService.getLatestLotSummarySeedPacket(widget.seedPacketUuid);
+
+    if (!mounted) return;
+
+    setState(() {
+      _lotSummaries = latestLot == null ? [] : [latestLot];
+    });
+  }
+
+  // Helper to build seed packet cards
+  Widget _buildLotCard(LotSummary lotSummary) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
+
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+
+        onTap: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => SeedPacketLotPage(
+                seedTypeUuid: widget.seedTypeUuid,
+                lotUuid: lotSummary.lotUuid,
+                seedPacketUuid: widget.seedPacketUuid,
+                commonName: widget.commonName,
+                variety: widget.variety,
+                botanicalName: widget.botanicalName,
+                storagePath: widget.storagePath,
+              ),
+            ),
+          );
+
+          await _loadlotSummaries();
+        },
+
+        child: Container(
+          width: double.infinity,
+
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.92),
+
+            borderRadius: BorderRadius.circular(14),
+
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 6, offset: const Offset(0, 2)),
+            ],
+          ),
+
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    Row(
+                      children: [
+                        Icon(SeedIconService.getIcon(lotSummary.eventIconCode), size: 28, color: Colors.black54),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'as of ${lotSummary.latestEventDate} you have ',
+                                  style: TextStyle(fontSize: 18, color: Colors.black),
+                                ),
+                                TextSpan(
+                                  text: '${lotSummary.lotQuantity}',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFEC799B)),
+                                ),
+                                TextSpan(
+                                  text: ' ${lotSummary.latestEventDisplayValue?.toLowerCase()}',
+                                  style: TextStyle(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold),
+                                ),
+                                TextSpan(
+                                  text: ' from this packet.',
+                                  style: TextStyle(fontSize: 18, color: Colors.black),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              const Icon(LucideIcons.chevronRight, size: 16, color: Colors.black54),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // Helper to confirm deletion of seed packet
 
   Future<bool> _confirmSeedPacketDeletion() async {
@@ -125,7 +232,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
     final initialSeedPacket = await _seedPacketService.getSeedPacketFromUuid(widget.seedPacketUuid);
 
     if (!mounted) return;
-    debugPrint('Seed packet in helper: ${initialSeedPacket.source}');
+
     setState(() {
       _sourceController.text = initialSeedPacket.source ?? '';
       _initialSeedQuantityController.text = (initialSeedPacket.initialSeedQuantity).toString();
@@ -259,7 +366,40 @@ class _SeedPacketState extends State<SeedPacketDetail> {
                   const SizedBox(height: 36),
                 ], // ExpansionTile children
               ),
+
+              ExpansionTile(
+                title: ElnoSectionHeader(headerString: 'Seed Packets Statusses'),
+
+                initiallyExpanded: false,
+
+                shape: const Border(),
+
+                collapsedShape: const Border(),
+
+                children: [
+                  const SizedBox(height: 24),
+
+                  ..._lotSummaries.map((lot) => _buildLotCard(lot)),
+
+                  if (_lotSummaries.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 24, right: 24, bottom: 10),
+                      child: Text(
+                        'No seed packets',
+                        style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Color(0xFFA7A19F)),
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  Opacity(opacity: 0.4, child: Image.asset('assets/images/frills/long_frill.png', fit: BoxFit.contain)),
+
+                  const SizedBox(height: 32),
+                ],
+              ),
+
               Spacer(),
+
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
@@ -277,6 +417,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
                     ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Text('Update the seed', style: TextStyle(fontSize: 20)),
               ),
+              SizedBox(height: 32),
             ], // Column children
           ),
           // Column

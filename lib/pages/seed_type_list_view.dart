@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:seedsage/pages/seed_type_add.dart';
-import 'seed_type_details.dart';
-import '../config/app_config.dart';
-import '../models/seed_type_list_data.dart';
-import 'main_menu.dart';
-import '../services/seed_type_list_service.dart';
+import 'package:seedsage/seed_sage.dart';
 
 class SeedList extends StatefulWidget {
   const SeedList({super.key});
@@ -19,7 +14,7 @@ class _SeedListState extends State<SeedList> {
   final ElnoMdCrudService _mdService = ElnoMdCrudService();
   final SeedTypeListService _seedTypeListService = SeedTypeListService();
 
-  List<ElnoMdOption> _statuses = [];
+  List<ElnoMdOption> _events = [];
   List<SeedTypeListData> _seeds = [];
 
   String _searchText = '';
@@ -31,17 +26,19 @@ class _SeedListState extends State<SeedList> {
   }
 
   Future<void> _loadPageData() async {
-    await _loadSeedTypeStatuses();
+    await _loadSeedTypeEvents();
     await _loadSeedTypes();
   }
 
-  Future<void> _loadSeedTypeStatuses() async {
-    final options = await _mdService.getMdOptionsByType('OBJ_STATUS');
-
+  Future<void> _loadSeedTypeEvents() async {
+    final options = await _mdService.getAllMdOptionsByType(SeedDefinitions.objectEventsMdType);
+    for (final event in options) {
+      debugPrint('EVENT: ${event.displayValue} | ${event.uuid}');
+    }
     if (!mounted) return;
 
     setState(() {
-      _statuses = options;
+      _events = options;
     });
   }
 
@@ -57,16 +54,6 @@ class _SeedListState extends State<SeedList> {
     } catch (e) {
       debugPrint('SEED LIST ERROR: $e');
     }
-  }
-
-  ElnoMdOption? _findStatusByName(String statusName) {
-    for (final status in _statuses) {
-      if (status.displayValue.toLowerCase() == statusName.toLowerCase()) {
-        return status;
-      }
-    }
-
-    return null;
   }
 
   List<SeedTypeListData> get _filteredSeeds {
@@ -85,23 +72,11 @@ class _SeedListState extends State<SeedList> {
   }
 
   int get _notSownCount {
-    final notSownStatus = _findStatusByName('Not sown');
-
-    if (notSownStatus == null) {
-      return 0;
-    }
-
-    return _seeds.where((seed) => seed.statusUuid == notSownStatus.uuid).length;
+    return _seeds.where((seed) => seed.eventUuid == null).length;
   }
 
   int get _sownCount {
-    final notSownStatus = _findStatusByName('Not sown');
-
-    if (notSownStatus == null) {
-      return 0;
-    }
-
-    return _seeds.where((seed) => seed.statusUuid != null && seed.statusUuid != notSownStatus.uuid).length;
+    return _seeds.where((seed) => seed.eventUuid != null).length;
   }
 
   Widget _buildSeedCard(SeedTypeListData seed) {
@@ -145,8 +120,10 @@ class _SeedListState extends State<SeedList> {
     );
   }
 
-  Widget _buildStatusExpansion(ElnoMdOption status) {
-    final matchingSeeds = _filteredSeeds.where((seed) => seed.statusUuid == status.uuid).toList();
+  Widget _buildEventExpansion(ElnoMdOption event) {
+    final statusName = event.displayValue;
+
+    final matchingSeeds = _filteredSeeds.where((seed) => seed.eventUuid == event.uuid).toList();
 
     return Stack(
       alignment: Alignment.topCenter,
@@ -177,7 +154,7 @@ class _SeedListState extends State<SeedList> {
           left: 0,
           right: 0,
           child: IgnorePointer(
-            child: Center(child: ElnoSectionHeader(headerString: status.displayValue)),
+            child: Center(child: ElnoSectionHeader(headerString: statusName)),
           ),
         ),
       ],
@@ -269,7 +246,7 @@ class _SeedListState extends State<SeedList> {
 
           Opacity(opacity: 0.4, child: Image.asset('assets/images/frills/long_frill.png', fit: BoxFit.fitWidth)),
 
-          ..._statuses.map((status) => _buildStatusExpansion(status)),
+          ..._events.map((event) => _buildEventExpansion(event)),
         ],
       ),
       floatingActionButton: ElnoFab(

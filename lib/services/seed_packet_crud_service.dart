@@ -1,6 +1,5 @@
 import 'package:seedsage/models/seed_packet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
 
 class SeedPacketService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -37,7 +36,7 @@ class SeedPacketService {
       purchaseDate: response?['purchase_date'] != null ? DateTime.parse(response!['purchase_date']) : null,
       initialSeedQuantity: response?['initial_seed_quantity'] ?? '',
     );
-    debugPrint('source in CRUD: ${seedPacket.source}');
+
     return seedPacket;
   }
 
@@ -80,6 +79,5 @@ class SeedPacketService {
           'initial_seed_quantity': seedPacket.initialSeedQuantity,
         })
         .eq('seed_packet_object_uuid', seedPacket.seedPacketObjectUuid);
-    ;
   }
 }

@@ -7,7 +7,15 @@ class SeedTypeListService {
 
   Future<List<SeedTypeListData>> getSeedTypes(SeedTypeListQuery query) async {
     var request = _supabase.from('obj_seed_type').select();
+    final response1 = await request;
+    debugPrint('SEED TYPES FOUND: ${response1.length}');
 
+    for (final row in response1) {
+      debugPrint(
+        'SEED: ${row['common_name']} | '
+        'UUID: ${row['seed_type_object_uuid']}',
+      );
+    }
     if (query.commonName != null && query.commonName!.isNotEmpty) {
       request = request.ilike('common_name', '%${query.commonName}%');
     }
@@ -20,9 +28,7 @@ class SeedTypeListService {
 
     final List<SeedTypeListData> seeds = [];
 
-    final seedUuids = response
-        .map<String>((row) => row['seed_type_object_uuid'] as String)
-        .toList();
+    final seedUuids = response.map<String>((row) => row['seed_type_object_uuid'] as String).toList();
 
     final eventResponse = await _supabase
         .from('evt_obj')
@@ -34,17 +40,13 @@ class SeedTypeListService {
     for (final row in response) {
       final seedUuid = row['seed_type_object_uuid'] as String;
 
-      final matchingEvents = eventResponse.where(
-        (event) => event['object_uuid'] == seedUuid,
-      );
+      final matchingEvents = eventResponse.where((event) => event['object_uuid'] == seedUuid);
 
-      final latestStatusUuid = matchingEvents.isEmpty
-          ? null
-          : matchingEvents.first['event_type_uuid'] as String?;
+      final latestEventUuid = matchingEvents.isEmpty ? null : matchingEvents.first['event_type_uuid'] as String?;
 
-      final rowWithStatus = {...row, 'status_uuid': latestStatusUuid};
+      final rowWithEvent = {...row, 'event_uuid': latestEventUuid};
 
-      seeds.add(SeedTypeListData.fromMap(rowWithStatus));
+      seeds.add(SeedTypeListData.fromMap(rowWithEvent));
     }
     return seeds;
   }

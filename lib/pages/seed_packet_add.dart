@@ -32,11 +32,11 @@ class _AddSeedPacket extends State<AddSeedPacket> {
   final DateTime defaultDate = DateTime.now();
   bool _isSaving = false;
 
-  void _clearForm() {
+  /*void _clearForm() {
     _source.clear();
     _initialSeedQuantity.clear();
     _formKey.currentState?.reset();
-  }
+  }*/
 
   @override
   void initState() {
@@ -121,11 +121,9 @@ class _AddSeedPacket extends State<AddSeedPacket> {
 
                   if (!mounted) return;
 
-                  _clearForm();
+                  if (!mounted) return;
 
-                  setState(() {
-                    _isSaving = false;
-                  });
+                  Navigator.pop(context);
                 } catch (error) {
                   debugPrint('CREATE SEED PACKET ERROR: $error');
 

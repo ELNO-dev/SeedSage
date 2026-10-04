@@ -1,5 +1,5 @@
 class SeedType {
-  final String seedTypeObjectUuid;
+  final String? seedTypeObjectUuid;
   final String commonName;
   final String? variant;
   final String? botanicalName;
@@ -24,7 +24,7 @@ class SeedType {
   final String? imageId;
 
   const SeedType({
-    required this.seedTypeObjectUuid,
+    this.seedTypeObjectUuid,
     required this.commonName,
     required this.variant,
     required this.botanicalName,

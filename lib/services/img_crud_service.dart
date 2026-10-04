@@ -25,19 +25,16 @@ class ImgCrudService {
 
   Future<Uint8List> getImage(String storagePath) async {
     final stopwatch = Stopwatch()..start();
-
-    debugPrint('START: $storagePath');
-
     try {
       final imageBytes = await _supabase.storage.from('Images').download(storagePath);
 
       stopwatch.stop();
 
-      debugPrint(
+      /* debugPrint(
         'DONE: $storagePath | '
         '${imageBytes.lengthInBytes} bytes | '
         '${stopwatch.elapsedMilliseconds} ms',
-      );
+      );*/
 
       return imageBytes;
     } catch (e) {

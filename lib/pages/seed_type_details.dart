@@ -17,43 +17,24 @@ class SeedDetail extends StatefulWidget {
 
 class _SeedDetailState extends State<SeedDetail> {
   final TextEditingController _commonNameController = TextEditingController();
-
   final TextEditingController _varietyController = TextEditingController();
-
   final TextEditingController _botanicalNameController = TextEditingController();
-
   final TextEditingController _descriptionController = TextEditingController();
-
   final TextEditingController _minGermController = TextEditingController();
-
   final TextEditingController _maxGermController = TextEditingController();
-
   final TextEditingController _growingInstController = TextEditingController();
-
   final TextEditingController _minHeightController = TextEditingController();
-
   final TextEditingController _maxHeightController = TextEditingController();
-
   final TextEditingController _minSpaceController = TextEditingController();
-
   final TextEditingController _maxSpaceController = TextEditingController();
-
   final TextEditingController _minGermDayController = TextEditingController();
-
   final TextEditingController _maxGermDayController = TextEditingController();
-
   final TextEditingController _minTransDayController = TextEditingController();
-
   final TextEditingController _maxTransDayController = TextEditingController();
-
   final TextEditingController _minFruitDayController = TextEditingController();
-
   final TextEditingController _maxFruitDayController = TextEditingController();
-
   final ImgCrudService _imgCrudService = ImgCrudService();
-
   final SeedTypeService _seedTypeService = SeedTypeService();
-
   final SeedPacketService _seedPacketService = SeedPacketService();
   final SeedTypeProcessService _seedTypeProcessService = SeedTypeProcessService();
 
@@ -74,19 +55,12 @@ class _SeedDetailState extends State<SeedDetail> {
   }
 
   bool _isSaving = false;
-
   String? _lifeCycleDisplay;
-
   bool _stratificationRequired = false;
-
   bool _pinchingRequired = false;
-
   String? _storagePath;
-
   Img? _newSelectedImage;
-
   Img? _existingImage;
-
   bool _hasChanged = false;
 
   // Helper to make the sequence run in series not parallel
@@ -172,10 +146,11 @@ class _SeedDetailState extends State<SeedDetail> {
             MaterialPageRoute(
               builder: (context) => SeedPacketDetail(
                 seedTypeUuid: widget.seedTypeUuid,
-
                 seedPacketUuid: seedPacket.seedPacketObjectUuid,
-
+                variety: _varietyController.text,
                 commonName: _commonNameController.text,
+                botanicalName: _botanicalNameController.text,
+                storagePath: _storagePath,
               ),
             ),
           );
@@ -265,43 +240,24 @@ class _SeedDetailState extends State<SeedDetail> {
 
     setState(() {
       _commonNameController.text = initialSeedType.commonName;
-
       _varietyController.text = initialSeedType.variant ?? '';
-
       _botanicalNameController.text = initialSeedType.botanicalName ?? '';
-
       _descriptionController.text = initialSeedType.description ?? '';
-
       _minGermController.text = initialSeedType.minGerminationTemperatureC?.toString() ?? '';
-
       _maxGermController.text = initialSeedType.maxGerminationTemperatureC?.toString() ?? '';
-
       _growingInstController.text = initialSeedType.growingInstructions ?? '';
-
       _stratificationRequired = initialSeedType.stratificationRequired ?? false;
-
       _pinchingRequired = initialSeedType.pinchingRequired ?? false;
-
       _minHeightController.text = initialSeedType.minHeightCm?.toString() ?? '';
-
       _maxHeightController.text = initialSeedType.maxHeightCm?.toString() ?? '';
-
       _minSpaceController.text = initialSeedType.minSpacingCm?.toString() ?? '';
-
       _maxSpaceController.text = initialSeedType.maxSpacingCm?.toString() ?? '';
-
       _minGermDayController.text = initialSeedType.minGerminationDays?.toString() ?? '';
-
       _maxGermDayController.text = initialSeedType.maxGerminationDays?.toString() ?? '';
-
       _minTransDayController.text = initialSeedType.minTransplantDays?.toString() ?? '';
-
       _maxTransDayController.text = initialSeedType.maxTransplantDays?.toString() ?? '';
-
       _minFruitDayController.text = initialSeedType.minFlowerFruitDays?.toString() ?? '';
-
       _maxFruitDayController.text = initialSeedType.maxFlowerFruitDays?.toString() ?? '';
-
       _lifeCycle = initialSeedType.lifeCycleUuid;
     });
   }
@@ -928,17 +884,14 @@ class _SeedDetailState extends State<SeedDetail> {
                   MaterialPageRoute(
                     builder: (context) => AddSeedPacket(
                       seedTypeUuid: widget.seedTypeUuid,
-
                       commonName: _commonNameController.text,
-
                       variety: _varietyController.text,
-
                       botanicalName: _botanicalNameController.text,
-
                       storagePath: _storagePath,
                     ),
                   ),
                 );
+                await _loadSeedPackets();
               },
             ),
           ],

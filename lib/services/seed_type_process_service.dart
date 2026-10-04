@@ -11,6 +11,8 @@ class SeedTypeProcessService {
   final ObjectCrudService _objectService = ObjectCrudService();
   final SeedPacketService _seedPacketService = SeedPacketService();
   final LotCrudService _lotService = LotCrudService();
+  final SeedTypeService _seedTypeService = SeedTypeService();
+  final EvtObjCrudService _evtObjCrudService = EvtObjCrudService();
   // delete seed type
   Future<void> deleteSeedType(String objectUuid) async {
     // Delete seed type
@@ -36,5 +38,16 @@ class SeedTypeProcessService {
     } catch (error) {
       debugPrint('Error on seed type object delete: $error');
     }
+  }
+
+  Future<void> createSeedType({required SeedType seedType}) async {
+    // Create seed object
+    final seedTypeUUID = await _objectService.createObjectfromType(SeedDefinitions.objObjectTypeSeedTypeUuid);
+
+    // Create seed type
+    await _seedTypeService.createSeedTypeNewUuid(seedType, seedTypeUUID);
+
+    // Create seed type not sown event
+    await _evtObjCrudService.createEvtObj(seedTypeUUID, SeedDefinitions.evtObjEventTypeNotSownUuid);
   }
 }
