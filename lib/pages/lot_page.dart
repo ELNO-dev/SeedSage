@@ -166,8 +166,6 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
                           _isSaving = true;
                         });
                         try {
-                          debugPrint('****************EVENT: $_selectedEvent');
-                          debugPrint('****************DATE: $_eventDate');
                           _latestLotUuid = await _lotProcessService.addLotEvent(
                             parentLotUuid: _latestLotUuid,
 
@@ -226,6 +224,14 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
     final plantedHistory = _lotHistoryData.where((history) => history.eventDisplayValue == 'Planted').firstOrNull;
     final matureHistory = _lotHistoryData.where((history) => history.eventDisplayValue == 'Mature').firstOrNull;
     final completeHistory = _lotHistoryData.where((history) => history.eventDisplayValue == 'Complete').firstOrNull;
+    final lostHistory = _lotHistoryData
+        .where(
+          (history) =>
+              history.eventDisplayValue == 'Lost' ||
+              history.eventDisplayValue == 'Discarded' ||
+              history.eventDisplayValue == 'No germination',
+        )
+        .firstOrNull;
 
     return ElnoPageLayout(
       appConfig: appConfig,
@@ -780,6 +786,78 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
                                         const TextSpan(
                                           text: 'completed their life cycle!!',
                                           style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFFEC799B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 10),
+                      child: Opacity(opacity: 0.6, child: Container(width: 200, height: 1, color: Color(0xFFEC799B))),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                // Lost
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: lostHistory == null
+                          ? Column(
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Opacity(
+                                      opacity: 0.6,
+                                      child: Icon(LucideIcons.ghost, size: 28, color: Color(0xFFEC799B)),
+                                    ),
+
+                                    const SizedBox(width: 24),
+
+                                    const Expanded(
+                                      child: Text(
+                                        'no lost seeds recorded',
+                                        style: TextStyle(fontSize: 18, color: Color.fromARGB(255, 58, 57, 57)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 20),
+                              ],
+                            )
+                          : Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(LucideIcons.ghost, size: 28, color: Color(0xFFEC799B)),
+
+                                const SizedBox(width: 24),
+
+                                Expanded(
+                                  child: Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        const TextSpan(
+                                          text: 'Total loss recorded: ',
+                                          style: TextStyle(fontSize: 18, color: Colors.black),
+                                        ),
+                                        TextSpan(
+                                          text: '${lostHistory.lotQuantity}',
+                                          style: const TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                             color: Color(0xFFEC799B),

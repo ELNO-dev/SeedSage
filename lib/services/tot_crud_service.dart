@@ -9,6 +9,25 @@ class TotCrudService {
       'total_value': totValue,
     });
   }
+
+  Future<void> updateTotObj(String objectUuid, String totDefUuid, int totValue) async {
+    await _supabase
+        .from('tot_obj')
+        .update({'total_value': totValue})
+        .eq('object_uuid', objectUuid)
+        .eq('total_definition_uuid', totDefUuid);
+  }
+
+  Future<int> getTotObj(String objectUuid, String totDefUuid, int totValue) async {
+    final response = await _supabase
+        .from('tot_obj')
+        .select('total_value')
+        .eq('object_uuid', objectUuid)
+        .eq('total_definition_uuid', totDefUuid)
+        .single();
+
+    return response['total_value'] as int;
+  }
 }
 // DELETE RULE:
 // 1. obj_object deletion cascades to records dependent on that object.

@@ -14,6 +14,7 @@ class LotSummary {
   final String? latestEventDate;
   final String? eventIconCode;
   final int lotQuantity;
+  final int remainingQuantity;
 
   const LotSummary({
     required this.lotUuid,
@@ -24,6 +25,7 @@ class LotSummary {
     this.latestEventDate,
     this.eventIconCode,
     required this.lotQuantity,
+    required this.remainingQuantity,
   });
 }
 
@@ -36,6 +38,7 @@ class LotHistory {
   final String? eventDate;
   final String? eventIconCode;
   final int lotQuantity;
+  final int remainingQuantity;
 
   const LotHistory({
     required this.lotUuid,
@@ -46,5 +49,6 @@ class LotHistory {
     this.eventDate,
     this.eventIconCode,
     required this.lotQuantity,
+    required this.remainingQuantity,
   });
 }

@@ -47,16 +47,16 @@ class _SeedPacketState extends State<SeedPacketDetail> {
 
   // Helper to get seed lot summaries
   Future<void> _loadlotSummaries() async {
-    final latestLot = await _lotCrudService.getLatestLotSummarySeedPacket(widget.seedPacketUuid);
+    final openLots = await _lotCrudService.getAllOpenLotsFromPacket(widget.seedPacketUuid);
 
     if (!mounted) return;
 
     setState(() {
-      _lotSummaries = latestLot == null ? [] : [latestLot];
+      _lotSummaries = openLots;
     });
   }
 
-  // Helper to build seed packet cards
+  // Helper to build seed packet lot cards
   Widget _buildLotCard(LotSummary lotSummary) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
@@ -117,7 +117,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
                                   style: TextStyle(fontSize: 18, color: Colors.black),
                                 ),
                                 TextSpan(
-                                  text: '${lotSummary.lotQuantity}',
+                                  text: '${lotSummary.remainingQuantity}',
                                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFEC799B)),
                                 ),
                                 TextSpan(

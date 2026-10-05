@@ -38,7 +38,7 @@ class SeedPacketProcessService {
     final lotObjectUuid = await _objectService.createObjectfromType(SeedDefinitions.objObjectTypeLotUuid);
 
     // Create initial lot with seed packet as parent
-    await _lotService.createLotFromParent(seedPacketObjectUuid, lotObjectUuid);
+    await _lotService.createLotFromParent(seedPacketObjectUuid, lotObjectUuid, seedPacketObjectUuid);
 
     // Create initial event on seed packet
     await createEvtObj.createEvtObj(seedPacketObjectUuid, SeedDefinitions.evtObjEventTypeNotSownUuid);
@@ -49,6 +49,15 @@ class SeedPacketProcessService {
     //Create initial quantity on lot
     if (seedPacket.initialSeedQuantity != null) {
       await _totalService.createTotObj(lotObjectUuid, SeedDefinitions.lotQuantityDef, seedPacket.initialSeedQuantity!);
+    }
+
+    //Create remaining quantity on lot
+    if (seedPacket.initialSeedQuantity != null) {
+      await _totalService.createTotObj(
+        lotObjectUuid,
+        SeedDefinitions.lotRemainingQuantityDef,
+        seedPacket.initialSeedQuantity!,
+      );
     }
   }
 

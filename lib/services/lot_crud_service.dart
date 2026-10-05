@@ -4,10 +4,10 @@ import 'package:seedsage/seed_sage.dart';
 class LotCrudService {
   final SupabaseClient _supabase = Supabase.instance.client;
   // Create Lot from parent uuid
-  Future<void> createLotFromParent(String parentObjectUuid, String lotUuid) async {
+  Future<void> createLotFromParent(String parentObjectUuid, String lotUuid, String seedPacketUuid) async {
     await _supabase
         .from('lot_object')
-        .insert({'parent_object_uuid': parentObjectUuid, 'lot_uuid': lotUuid})
+        .insert({'parent_object_uuid': parentObjectUuid, 'lot_uuid': lotUuid, 'seed_packet_uuid': seedPacketUuid})
         .select('lot_uuid')
         .single();
   }
@@ -54,6 +54,7 @@ class LotCrudService {
         latestEventUuid: lotsummary['latest_event_uuid'],
         eventIconCode: lotsummary['latest_event_icon_code'],
         lotQuantity: lotsummary['total_seeds'],
+        remainingQuantity: lotsummary['remaining_seeds'],
       );
     }).toList();
   }
@@ -72,6 +73,7 @@ class LotCrudService {
         eventUuid: lotHistory['event_uuid'],
         eventIconCode: lotHistory['event_icon_code'],
         lotQuantity: lotHistory['lot_quantity'],
+        remainingQuantity: lotHistory['lot_remaining_quantity'],
       );
     }).toList();
   }
@@ -96,6 +98,7 @@ class LotCrudService {
       eventUuid: response['event_uuid'],
       eventIconCode: response['event_icon_code'],
       lotQuantity: response['lot_quantity'],
+      remainingQuantity: response['lot_remaining_quantity'],
     );
   }
 
@@ -133,6 +136,66 @@ class LotCrudService {
       latestEventUuid: latestLot['latest_event_uuid'],
       eventIconCode: latestLot['latest_event_icon_code'],
       lotQuantity: latestLot['total_seeds'],
+      remainingQuantity: latestLot['remaining_seeds'],
     );
+  }
+
+  // Get lot history from lotUuid list
+  Future<List<LotHistory>> getOpenLotHistoryLotUuid(List<String> lotUuids) async {
+    final response = await _supabase.from('vw_lot_history').select().inFilter('lot_uuid', lotUuids);
+
+    return response.map<LotHistory>((lotHistory) {
+      return LotHistory(
+        parentObjectUuid: lotHistory['parent_object_uuid'],
+        lotUuid: lotHistory['lot_uuid'],
+        eventDate: lotHistory['event_date'],
+        eventDisplayValue: lotHistory['event_display_value'],
+        eventTypeUuid: lotHistory['event_type_uuid'],
+        eventUuid: lotHistory['event_uuid'],
+        eventIconCode: lotHistory['event_icon_code'],
+        lotQuantity: lotHistory['lot_quantity'],
+        remainingQuantity: lotHistory['lot_remaining_quantity'],
+      );
+    }).toList();
+  }
+
+  // Get lot history from lot UUID
+  Future<LotHistory> getLotSummaryFromUuid(String lotUuid) async {
+    final response = await _supabase.from('vw_lot_history').select().eq('lot_uuid', lotUuid).single();
+
+    return LotHistory(
+      parentObjectUuid: response['parent_object_uuid'],
+      lotUuid: response['lot_uuid'],
+      eventDate: response['event_date'],
+      eventDisplayValue: response['event_display_value'],
+      eventTypeUuid: response['event_type_uuid'],
+      eventUuid: response['event_uuid'],
+      eventIconCode: response['event_icon_code'],
+      lotQuantity: response['lot_quantity'],
+      remainingQuantity: response['lot_remaining_quantity'],
+    );
+  }
+
+  // Get all open lots from seed packet - straight line only
+  Future<List<LotSummary>> getAllOpenLotsFromPacket(String seedPacketUuid) async {
+    final response = await _supabase
+        .from('vw_lot_summary')
+        .select()
+        .eq('seed_packet_uuid', seedPacketUuid)
+        .gt('remaining_seeds', 0);
+
+    return response.map<LotSummary>((lot) {
+      return LotSummary(
+        parentObjectUuid: lot['parent_object_uuid'],
+        lotUuid: lot['lot_uuid'],
+        latestEventDate: lot['latest_event_date'],
+        latestEventDisplayValue: lot['latest_event_display_value'],
+        latestEventTypeUuid: lot['latest_event_type_uuid'],
+        latestEventUuid: lot['latest_event_uuid'],
+        eventIconCode: lot['latest_event_icon_code'],
+        lotQuantity: lot['total_seeds'],
+        remainingQuantity: lot['remaining_seeds'],
+      );
+    }).toList();
   }
 }
