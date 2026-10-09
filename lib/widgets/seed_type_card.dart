@@ -2,10 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
-import 'package:seedsage/models/images.dart';
-
-import '../pages/seed_type_image_select.dart';
-import '../services/img_crud_service.dart';
+import 'package:seedsage/seed_sage.dart';
 
 class SeedTypeCard extends StatefulWidget {
   final String commonName;
@@ -14,6 +11,7 @@ class SeedTypeCard extends StatefulWidget {
   final String? storagePath;
   final String? botanicalName;
   final ValueChanged<Img>? onImageChanged;
+  final String? currentObjectUuid;
 
   const SeedTypeCard({
     super.key,
@@ -23,6 +21,7 @@ class SeedTypeCard extends StatefulWidget {
     this.storagePath,
     this.botanicalName,
     this.onImageChanged,
+    this.currentObjectUuid,
   });
 
   @override
@@ -31,12 +30,16 @@ class SeedTypeCard extends StatefulWidget {
 
 class _SeedTypeCardState extends State<SeedTypeCard> {
   final ImgCrudService _imgCrudService = ImgCrudService();
+  final EvtObjCrudService _eventService = EvtObjCrudService();
   String? _storagePath;
+  String? _eventName;
+  String? _eventIcon;
 
   @override
   void initState() {
     super.initState();
     _storagePath = widget.storagePath;
+    _latestStatus();
   }
 
   @override
@@ -46,6 +49,24 @@ class _SeedTypeCardState extends State<SeedTypeCard> {
     if (oldWidget.storagePath != widget.storagePath) {
       _storagePath = widget.storagePath;
     }
+  }
+
+  // helper to get latest event
+  Future<void> _latestStatus() async {
+    if (widget.currentObjectUuid == null) {
+      return;
+    }
+
+    final highestEvent = await _eventService.getHighestEventByDisplaySequence(
+      widget.currentObjectUuid!,
+      SeedDefinitions.evtObjEventTypeMdTypeUuid,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _eventName = highestEvent.eventDisplayValue;
+      _eventIcon = highestEvent.iconCode;
+    });
   }
 
   @override
@@ -81,6 +102,23 @@ class _SeedTypeCardState extends State<SeedTypeCard> {
                           ),
                           SizedBox(height: 12),
                           Text(toTitleCase(widget.variant ?? ''), style: const TextStyle(fontSize: 18)),
+                          SizedBox(height: 12),
+                          if (_eventName != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(SeedIconService.getIcon(_eventIcon), size: 16, color: const Color(0xFFEC799B)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  toTitleCase(_eventName!),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontStyle: FontStyle.italic,
+                                    color: Color(0xFFEC799B),
+                                  ),
+                                ),
+                              ],
+                            ),
                           Spacer(),
                           Text(
                             toTitleCase(widget.botanicalName ?? ''),

@@ -43,6 +43,7 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
   final _eventFormKey = GlobalKey<FormState>();
   bool _isSaving = false;
   late String _latestLotUuid;
+  int _cardRefresh = 0;
 
   void setChanged(String? newValue) {
     if (newValue != null) {
@@ -58,17 +59,83 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
     _eventDate = defaultDate;
     _latestLotUuid = widget.lotUuid;
     _loadEventOptions();
-    _loadlotHistory();
+  }
+
+  // Helper for save on edit
+  Future<void> _promptForSave(BuildContext bottomSheetContext) async {
+    if (_hasChanged == true) {
+      await showDialog<bool>(
+        context: context,
+
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Do you want to exit the screen without saving your changes?'),
+
+            content: const Text('Leaving the screen will mean you lose all changes'),
+
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
+
+                  _latestLotUuid = await _lotProcessService.addLotEvent(
+                    parentLotUuid: _latestLotUuid,
+
+                    eventMdUuid: _selectedEvent!,
+                    eventDate: _eventDate!,
+                    seedQuantity: int.parse(_eventSeedQuantityController.text),
+                    seedPacketUuid: widget.seedPacketUuid,
+                    seedTypeUuid: widget.seedTypeUuid,
+                  );
+
+                  if (!bottomSheetContext.mounted) return;
+
+                  setState(() {
+                    _isSaving = false;
+                    _hasChanged = false;
+                    _cardRefresh++;
+                  });
+                  _clearEventForm();
+                  Navigator.of(bottomSheetContext).pop();
+
+                  await _loadlotHistory();
+                },
+
+                child: const Text('Save and exit'),
+              ),
+
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, true);
+
+                  if (!context.mounted) return;
+
+                  Navigator.of(context).pop();
+                },
+
+                child: const Text('Discard and exit', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   // Helper for event options
   Future<void> _loadEventOptions() async {
+    await _loadlotHistory();
     final options = await _mdGetService.getMdOptionsByType(SeedDefinitions.objectEventsMdType);
+    final latestHistory = _lotHistoryData.where((history) => history.lotUuid == _latestLotUuid).firstOrNull;
+    final latestLotDisplaySequence = latestHistory?.displaySequence!;
+    final validOptions = options.where((options) => options.displaySequence! > latestLotDisplaySequence!).toList();
 
     if (!mounted) return;
 
     setState(() {
-      _eventOptions = options;
+      _eventOptions = validOptions;
     });
   }
 
@@ -97,117 +164,176 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
 
   // pop up to add event
   void _showAddEvent() {
+    final latestHistory = _lotHistoryData.where((history) => history.lotUuid == _latestLotUuid).firstOrNull;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+
       builder: (bottomSheetContext) {
-        return Form(
-          key: _eventFormKey,
-          child: SizedBox(
-            height: 450,
-            width: 350,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Add an event', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        return PopScope(
+          canPop: false,
 
-                  const SizedBox(height: 24),
-                  ElnoDateInput(
-                    labelText: 'Event Date',
-                    requiredField: true,
-                    value: _eventDate,
-                    hintText: _eventDateController.toString(),
-                    minDate: DateTime(1900),
-                    maxDate: DateTime.now(),
-                    controller: _eventDateController,
-                    defaultDate: defaultDate,
-                    onDtChanged: (newValue) {
-                      setState(() {
-                        _eventDate = newValue;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  ElnoMdInput(
-                    labelText: 'Event',
-                    options: _eventOptions,
-                    hintText: 'select an event...',
-                    value: _selectedEvent,
-                    onChanged: (newValue) {
-                      setChanged(newValue.toString());
-                      setState(() {
-                        _selectedEvent = newValue;
-                      });
-                    },
-                    requiredField: true,
-                  ),
+          onPopInvokedWithResult: (didPop, result) async {
+            await _promptForSave((bottomSheetContext));
+          },
+          child: Form(
+            key: _eventFormKey,
+            child: SizedBox(
+              height: 550,
+              width: 350,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Add an event', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      // latest
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  const TextSpan(
+                                    text: '      last recorded details show ',
+                                    style: TextStyle(fontSize: 16, color: Colors.black),
+                                  ),
+                                  TextSpan(
+                                    text: '${latestHistory!.remainingQuantity}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontStyle: FontStyle.italic,
+                                      color: Color(0xFFEC799B),
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: ' in stats ',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                      fontStyle: FontStyle.italic,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: '${latestHistory.eventDisplayValue}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFEC799B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
 
-                  const SizedBox(height: 20),
-                  ElnoIntInput(
-                    labelText: 'Seed count',
-                    intHintText: _eventSeedQuantityController.text,
-                    intController: _eventSeedQuantityController,
-                    requiredField: true,
-                    newController: setChanged,
-                  ),
-                  const Spacer(),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final isValid = _eventFormKey.currentState!.validate();
-
-                        if (!isValid) return;
-
-                        setState(() {
-                          _isSaving = true;
-                        });
-                        try {
-                          _latestLotUuid = await _lotProcessService.addLotEvent(
-                            parentLotUuid: _latestLotUuid,
-
-                            eventMdUuid: _selectedEvent!,
-                            eventDate: _eventDate!,
-                            seedQuantity: int.parse(_eventSeedQuantityController.text),
-                            seedPacketUuid: widget.seedPacketUuid,
-                            seedTypeUuid: widget.seedTypeUuid,
-                          );
-
-                          if (!mounted) return;
-                          if (!bottomSheetContext.mounted) return;
-
+                      // latest
+                      const SizedBox(height: 24),
+                      ElnoDateInput(
+                        labelText: 'Event Date',
+                        requiredField: true,
+                        value: _eventDate,
+                        hintText: _eventDateController.toString(),
+                        minDate: DateTime(1900),
+                        maxDate: DateTime.now(),
+                        controller: _eventDateController,
+                        defaultDate: defaultDate,
+                        onDtChanged: (newValue) {
                           setState(() {
-                            _isSaving = false;
+                            _eventDate = newValue;
+                            _hasChanged = true;
                           });
-
-                          Navigator.pop(bottomSheetContext);
-                          _clearEventForm();
-
-                          await _loadlotHistory();
-                        } catch (error) {
-                          debugPrint('CREATE LOT ERROR: $error');
-
-                          if (!mounted) return;
-                          if (!bottomSheetContext.mounted) return;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      ElnoMdInput(
+                        labelText: 'Event',
+                        options: _eventOptions,
+                        hintText: 'select an event...',
+                        value: _selectedEvent,
+                        onChanged: (newValue) {
+                          setChanged(newValue.toString());
                           setState(() {
-                            _isSaving = false;
+                            _selectedEvent = newValue;
+                            _hasChanged = true;
                           });
-                          // ELLEN FIX THIS THE SCAFFOLD MESSANGER IS BEHIND THE BOTTOMODAL THINGIE!!
-                          ScaffoldMessenger.of(
-                            bottomSheetContext,
-                          ).showSnackBar(AppSnackBar.failed(message: error.toString().replaceFirst('Exception: ', '')));
-                        }
-                      },
-                      child: _isSaving
-                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('Add event', style: TextStyle(fontSize: 20)),
-                    ),
+                        },
+                        requiredField: true,
+                      ),
+
+                      const SizedBox(height: 20),
+                      ElnoIntInput(
+                        labelText: 'Seed count',
+                        intHintText: _eventSeedQuantityController.text,
+                        intController: _eventSeedQuantityController,
+                        requiredField: true,
+                        newController: setChanged,
+                      ),
+
+                      SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final isValid = _eventFormKey.currentState!.validate();
+
+                            if (!isValid) return;
+
+                            setState(() {
+                              _isSaving = true;
+                            });
+                            try {
+                              _latestLotUuid = await _lotProcessService.addLotEvent(
+                                parentLotUuid: _latestLotUuid,
+                                eventMdUuid: _selectedEvent!,
+                                eventDate: _eventDate!,
+                                seedQuantity: int.parse(_eventSeedQuantityController.text),
+                                seedPacketUuid: widget.seedPacketUuid,
+                                seedTypeUuid: widget.seedTypeUuid,
+                              );
+
+                              if (!mounted) return;
+                              if (!bottomSheetContext.mounted) return;
+
+                              setState(() {
+                                _isSaving = false;
+                                _hasChanged = false;
+                                _cardRefresh++;
+                              });
+
+                              Navigator.pop(bottomSheetContext);
+                              _clearEventForm();
+
+                              await _loadlotHistory();
+                            } catch (error) {
+                              debugPrint('CREATE LOT ERROR: $error');
+
+                              if (!mounted) return;
+                              if (!bottomSheetContext.mounted) return;
+                              setState(() {
+                                _isSaving = false;
+                              });
+                              // ELLEN FIX THIS THE SCAFFOLD MESSANGER IS BEHIND THE BOTTOMODAL THINGIE!!
+                              ScaffoldMessenger.of(bottomSheetContext).showSnackBar(
+                                AppSnackBar.failed(message: error.toString().replaceFirst('Exception: ', '')),
+                              );
+                            }
+                          },
+                          child: _isSaving
+                              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                              : const Text('Add event', style: TextStyle(fontSize: 20)),
+                        ),
+                      ),
+                      SizedBox(height: 44),
+                    ],
                   ),
-                  SizedBox(height: 38),
-                ],
+                ),
               ),
             ),
           ),
@@ -243,11 +369,13 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
           ElnoSectionHeader(headerString: 'History'),
           const SizedBox(height: 16),
           SeedTypeCard(
+            key: ValueKey(_cardRefresh),
             commonName: widget.commonName,
             variant: widget.variety,
             botanicalName: widget.botanicalName,
             storagePath: widget.storagePath,
             allowImageChange: false,
+            currentObjectUuid: widget.seedPacketUuid,
           ),
 
           const SizedBox(height: 44),
@@ -382,7 +510,9 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
                                 Icon(LucideIcons.bean, size: 28, color: Colors.black54),
 
                                 const SizedBox(width: 24),
+                                //latestHistory
 
+                                //latestHistory
                                 Expanded(
                                   child: Text.rich(
                                     TextSpan(
@@ -587,7 +717,7 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
                                           ),
                                         ),
                                         TextSpan(
-                                          text: '${plantedHistory?.lotQuantity}',
+                                          text: '${plantedHistory.lotQuantity}',
                                           style: const TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,

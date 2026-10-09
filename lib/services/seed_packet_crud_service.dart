@@ -80,4 +80,26 @@ class SeedPacketService {
         })
         .eq('seed_packet_object_uuid', seedPacket.seedPacketObjectUuid);
   }
+
+  // Create a seed packet using submitted attributes
+  Future<List<SeedPacketSummary>> getSeedPacketSummaryFromTypeUuid(String seedTypeUuid) async {
+    final response = await _supabase.from('vw_seed_packet_summary').select().eq('seed_type_uuid', seedTypeUuid);
+
+    return response.map((row) {
+      return SeedPacketSummary(
+        seedPacketObjectUuid: row['seed_packet_uuid'],
+        seedTypeUuid: row['seed_type_uuid'],
+        source: row['source'],
+        purchaseDate: row['purchase_date'] != null ? DateTime.parse(row['purchase_date']) : null,
+        initialSeedQuantity: row['initial_seed_quantity'],
+        remainingQuantity: row['available_quantity'],
+        latestEventUuid: row['latest_event_uuid'],
+        latestEventTypeUuid: row['latest_event_type_uuid'],
+        latestEventDisplayValue: row['latest_event_display_value'],
+        latestEventIconCode: row['latest_event_icon_code'] ?? '',
+        latestEventDate: DateTime.parse(row['latest_event_date']),
+        latestEventDispaySequence: row['latest_event_display_sequence'],
+      );
+    }).toList();
+  }
 }

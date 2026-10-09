@@ -39,6 +39,7 @@ class LotHistory {
   final String? eventIconCode;
   final int lotQuantity;
   final int remainingQuantity;
+  final int? displaySequence;
 
   const LotHistory({
     required this.lotUuid,
@@ -50,5 +51,6 @@ class LotHistory {
     this.eventIconCode,
     required this.lotQuantity,
     required this.remainingQuantity,
+    this.displaySequence,
   });
 }

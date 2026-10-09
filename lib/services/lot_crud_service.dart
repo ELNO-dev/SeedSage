@@ -74,6 +74,7 @@ class LotCrudService {
         eventIconCode: lotHistory['event_icon_code'],
         lotQuantity: lotHistory['lot_quantity'],
         remainingQuantity: lotHistory['lot_remaining_quantity'],
+        displaySequence: lotHistory['event_display_sequence'],
       );
     }).toList();
   }
@@ -155,6 +156,7 @@ class LotCrudService {
         eventIconCode: lotHistory['event_icon_code'],
         lotQuantity: lotHistory['lot_quantity'],
         remainingQuantity: lotHistory['lot_remaining_quantity'],
+        displaySequence: lotHistory['event_display_sequence'],
       );
     }).toList();
   }

@@ -13,6 +13,7 @@ export 'models/seed_packet.dart';
 export 'models/seed_type_image.dart';
 export 'models/seed_type_list_data.dart';
 export 'models/seed_type.dart';
+export 'models/event.dart';
 
 // PAGES
 export 'pages/landing_page.dart';

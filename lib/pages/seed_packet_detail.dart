@@ -89,9 +89,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
 
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.92),
-
             borderRadius: BorderRadius.circular(14),
-
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 6, offset: const Offset(0, 2)),
             ],
@@ -311,6 +309,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
                 botanicalName: widget.botanicalName,
                 storagePath: widget.storagePath,
                 allowImageChange: false,
+                currentObjectUuid: widget.seedPacketUuid,
               ),
               const SizedBox(height: 14),
               SeedPacketStatusBar(seedPacketUuid: widget.seedPacketUuid),
@@ -368,8 +367,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
               ),
 
               ExpansionTile(
-                title: ElnoSectionHeader(headerString: 'Seed Packets Statusses'),
-
+                title: ElnoSectionHeader(headerString: 'Seed Statusses (${_lotSummaries.length})'),
                 initiallyExpanded: false,
 
                 shape: const Border(),

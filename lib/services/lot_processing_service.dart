@@ -1,5 +1,4 @@
 import 'package:seedsage/seed_sage.dart';
-import 'package:flutter/foundation.dart';
 
 // DELETE RULE:
 // 1. obj_object deletion cascades to records dependent on that object.
@@ -73,13 +72,38 @@ class LotProcessService {
       SeedDefinitions.lotRemainingQuantityDef,
       parentRemainingLotQuantity,
     );
+    // Get latest event on seed packet
+    final packetHighestEvent = await _eventService.getHighestEventByDisplaySequence(
+      seedPacketUuid,
+      SeedDefinitions.evtObjEventTypeMdTypeUuid,
+    );
+    final int packetHighestDisplaySeq = packetHighestEvent.eventDisplaySequence!;
 
-    // Create  event on seed packet
-    await _eventService.createEvtObjwithDate(seedPacketUuid, eventMdUuid, eventDate);
+    final lotHighestEvent = await _eventService.getHighestEventByDisplaySequence(
+      lotObjectUuid,
+      SeedDefinitions.evtObjEventTypeMdTypeUuid,
+    );
+    final int lotEventDisplaySequence = lotHighestEvent.eventDisplaySequence!;
+    if (lotEventDisplaySequence > packetHighestDisplaySeq) {
+      // Create  event on seed packet
+      await _eventService.createEvtObjwithDate(seedPacketUuid, eventMdUuid, eventDate);
+    }
 
     // Create  event on seed type
-    await _eventService.createEvtObjwithDate(seedTypeUuid, eventMdUuid, eventDate);
+    final newPacketHighestEvent = await _eventService.getHighestEventByDisplaySequence(
+      seedPacketUuid,
+      SeedDefinitions.evtObjEventTypeMdTypeUuid,
+    );
+    final int newPacketHighestDisplaySeq = newPacketHighestEvent.eventDisplaySequence!;
 
+    final seedTypeHighestEvent = await _eventService.getHighestEventByDisplaySequence(
+      seedTypeUuid,
+      SeedDefinitions.evtObjEventTypeMdTypeUuid,
+    );
+    final int seedTypeEventDisplaySequence = seedTypeHighestEvent.eventDisplaySequence!;
+    if (newPacketHighestDisplaySeq > seedTypeEventDisplaySequence) {
+      await _eventService.createEvtObjwithDate(seedTypeUuid, newPacketHighestEvent.eventTypeUuid, eventDate);
+    }
     // return the new lot object UUID
     return lotObjectUuid;
   }

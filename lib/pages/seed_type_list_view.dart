@@ -4,7 +4,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:seedsage/seed_sage.dart';
 
 class SeedList extends StatefulWidget {
-  const SeedList({super.key});
+  final String? selectedEventTypeUuid;
+  final String? selectedFilter;
+
+  const SeedList({super.key, this.selectedEventTypeUuid, this.selectedFilter});
 
   @override
   State<SeedList> createState() => _SeedListState();
@@ -13,7 +16,8 @@ class SeedList extends StatefulWidget {
 class _SeedListState extends State<SeedList> {
   final ElnoMdCrudService _mdService = ElnoMdCrudService();
   final SeedTypeListService _seedTypeListService = SeedTypeListService();
-
+  TextEditingController _searchController = TextEditingController();
+  bool initExpand = false;
   List<ElnoMdOption> _events = [];
   List<SeedTypeListData> _seeds = [];
 
@@ -23,6 +27,12 @@ class _SeedListState extends State<SeedList> {
   void initState() {
     super.initState();
     _loadPageData();
+    if (widget.selectedFilter != null) {
+      _searchText = widget.selectedFilter!;
+      _searchController = TextEditingController(text: widget.selectedFilter!);
+    } else {
+      _searchText = '';
+    }
   }
 
   Future<void> _loadPageData() async {
@@ -32,9 +42,10 @@ class _SeedListState extends State<SeedList> {
 
   Future<void> _loadSeedTypeEvents() async {
     final options = await _mdService.getAllMdOptionsByType(SeedDefinitions.objectEventsMdType);
-    for (final event in options) {
+    /*for (final event in options) {
       debugPrint('EVENT: ${event.displayValue} | ${event.uuid}');
-    }
+    }*/
+
     if (!mounted) return;
 
     setState(() {
@@ -45,7 +56,9 @@ class _SeedListState extends State<SeedList> {
   Future<void> _loadSeedTypes() async {
     try {
       final seeds = await _seedTypeListService.getSeedTypes(const SeedTypeListQuery());
-
+      /*for (final seed in seeds) {
+        debugPrint('SEED: ${seed.commonName} | EVENT UUID: ${seed.eventUuid}');
+      }*/
       if (!mounted) return;
 
       setState(() {
@@ -124,13 +137,20 @@ class _SeedListState extends State<SeedList> {
     final statusName = event.displayValue;
 
     final matchingSeeds = _filteredSeeds.where((seed) => seed.eventUuid == event.uuid).toList();
+    final seedCount = matchingSeeds.length;
+    final String? eventTypeUuid = event.mdValueUuid;
+    if (eventTypeUuid == widget.selectedEventTypeUuid) {
+      initExpand = true;
+    } else {
+      initExpand = false;
+    }
 
     return Stack(
       alignment: Alignment.topCenter,
       children: [
         ExpansionTile(
           title: const SizedBox(height: 40),
-          initiallyExpanded: false,
+          initiallyExpanded: initExpand,
           shape: const Border(),
           collapsedShape: const Border(),
           children: [
@@ -154,7 +174,12 @@ class _SeedListState extends State<SeedList> {
           left: 0,
           right: 0,
           child: IgnorePointer(
-            child: Center(child: ElnoSectionHeader(headerString: statusName)),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [ElnoSectionHeader(headerString: '$statusName (${seedCount.toString()})')],
+              ),
+            ),
           ),
         ),
       ],
@@ -208,6 +233,7 @@ class _SeedListState extends State<SeedList> {
                     child: Image.asset('assets/icons/search_flourish.png', fit: BoxFit.fitWidth),
                   ),
                   TextField(
+                    controller: _searchController,
                     onChanged: (value) {
                       setState(() {
                         _searchText = value;

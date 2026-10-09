@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 import 'package:foundation/foundation.dart';
-
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-
 import 'package:seedsage/seed_sage.dart';
 
 class SeedDetail extends StatefulWidget {
@@ -39,13 +37,9 @@ class _SeedDetailState extends State<SeedDetail> {
   final SeedTypeProcessService _seedTypeProcessService = SeedTypeProcessService();
 
   dynamic _lifeCycle;
-
   List<ElnoMdOption> _lifeCycleOptions = [];
-
-  List<SeedPacket> _seedPackets = [];
-
+  List<SeedPacketSummary> _seedPackets = [];
   final _formKey = GlobalKey<FormState>();
-
   final ElnoMdCrudService _mdGetService = ElnoMdCrudService();
   @override
   void initState() {
@@ -67,13 +61,9 @@ class _SeedDetailState extends State<SeedDetail> {
 
   Future<void> _loadPageData() async {
     await _loadInitialSeedType();
-
     await _loadLifeCycleOptions();
-
     await _loadLifeCycleDisplay();
-
     await _imageBytes();
-
     await _loadSeedPackets();
   }
 
@@ -82,7 +72,6 @@ class _SeedDetailState extends State<SeedDetail> {
   Future<bool> _confirmSeedDeletion() async {
     final bool? userConfirmed = await showDialog<bool>(
       context: context,
-
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Are you sure you want to delete the seed?'),
@@ -119,7 +108,7 @@ class _SeedDetailState extends State<SeedDetail> {
   //Helper to get seed packets
 
   Future<void> _loadSeedPackets() async {
-    final packets = await _seedPacketService.getSeedPacketsFromSeedType(widget.seedTypeUuid);
+    final packets = await _seedPacketService.getSeedPacketSummaryFromTypeUuid(widget.seedTypeUuid);
 
     if (!mounted) return;
 
@@ -130,10 +119,8 @@ class _SeedDetailState extends State<SeedDetail> {
 
   // Helper to build seed packet cards
 
-  Widget _buildSeedPacketCard(SeedPacket seedPacket) {
-    final hasSource = seedPacket.source != null && seedPacket.source!.trim().isNotEmpty;
-
-    final hasQuantity = seedPacket.initialSeedQuantity != null;
+  Widget _buildSeedPacketCard(SeedPacketSummary seedPacketSummary) {
+    final hasSource = seedPacketSummary.source != null && seedPacketSummary.source!.trim().isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 5),
@@ -146,7 +133,7 @@ class _SeedDetailState extends State<SeedDetail> {
             MaterialPageRoute(
               builder: (context) => SeedPacketDetail(
                 seedTypeUuid: widget.seedTypeUuid,
-                seedPacketUuid: seedPacket.seedPacketObjectUuid,
+                seedPacketUuid: seedPacketSummary.seedPacketObjectUuid,
                 variety: _varietyController.text,
                 commonName: _commonNameController.text,
                 botanicalName: _botanicalNameController.text,
@@ -159,9 +146,7 @@ class _SeedDetailState extends State<SeedDetail> {
         },
 
         child: Container(
-          width: double.infinity,
-
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
 
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.92),
@@ -174,37 +159,65 @@ class _SeedDetailState extends State<SeedDetail> {
           ),
 
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Column(
+                children: [
+                  Icon(
+                    SeedIconService.getIcon(seedPacketSummary.latestEventIconCode),
+                    size: 24,
+                    color: const Color(0xFFEC799B),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    seedPacketSummary.latestEventDisplayValue,
+                    style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Color(0xFFEC799B)),
+                  ),
+                ],
+              ),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
                     Text(
-                      'Purchased: ${seedPacket.purchaseDate!.toIso8601String().split('T').first}',
-
+                      'Purchased: ${DateFormat('dd MMMM yyyy').format(seedPacketSummary.purchaseDate!)}',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
 
-                    const SizedBox(height: 2),
+                    if (hasSource) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'from: ${seedPacketSummary.source!}',
+                        style: const TextStyle(fontSize: 16, color: Color(0xFF77706E)),
+                      ),
+                    ],
+
+                    const SizedBox(height: 10),
 
                     Row(
                       children: [
-                        if (hasSource)
-                          Text(
-                            'from: ${seedPacket.source!}',
-
-                            style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Color(0xFF77706E)),
-                          ),
-
-                        const Spacer(),
-
-                        if (hasQuantity)
-                          Text(
-                            'Initial seed quantity: ${seedPacket.initialSeedQuantity}',
-
-                            style: const TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Color(0xFF77706E)),
-                          ),
+                        Column(
+                          children: [
+                            Text('Initial', style: const TextStyle(fontSize: 16, color: Color(0xFF77706E))),
+                            SizedBox(height: 2),
+                            Text(
+                              '${seedPacketSummary.initialSeedQuantity ?? '—'}',
+                              style: const TextStyle(fontSize: 16, color: Color(0xFF77706E)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 36),
+                        Column(
+                          children: [
+                            Text('Not sown', style: const TextStyle(fontSize: 16, color: Color(0xFF77706E))),
+                            SizedBox(height: 2),
+                            Text(
+                              '${seedPacketSummary.remainingQuantity ?? '—'}',
+                              style: const TextStyle(fontSize: 16, color: Color(0xFF77706E)),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ],
@@ -307,47 +320,26 @@ class _SeedDetailState extends State<SeedDetail> {
 
     final updatedSeedType = SeedType(
       seedTypeObjectUuid: widget.seedTypeUuid,
-
       commonName: _commonNameController.text.trim(),
-
       variant: _varietyController.text.trim(),
-
       botanicalName: _botanicalNameController.text.trim(),
-
       description: _descriptionController.text.trim(),
-
       minGerminationTemperatureC: int.tryParse(_minGermController.text),
-
       maxGerminationTemperatureC: int.tryParse(_maxGermController.text),
-
       growingInstructions: _growingInstController.text.trim(),
-
       minHeightCm: int.tryParse(_minHeightController.text),
-
       maxHeightCm: int.tryParse(_maxHeightController.text),
-
       minSpacingCm: int.tryParse(_minSpaceController.text),
-
       maxSpacingCm: int.tryParse(_maxSpaceController.text),
-
       stratificationRequired: _stratificationRequired,
-
       pinchingRequired: _pinchingRequired,
-
       minGerminationDays: int.tryParse(_minGermDayController.text),
-
       maxGerminationDays: int.tryParse(_maxGermDayController.text),
-
       minTransplantDays: int.tryParse(_minTransDayController.text),
-
       maxTransplantDays: int.tryParse(_maxTransDayController.text),
-
       minFlowerFruitDays: int.tryParse(_minFruitDayController.text),
-
       maxFlowerFruitDays: int.tryParse(_maxFruitDayController.text),
-
       lifeCycleUuid: _lifeCycle,
-
       imageId: null,
     );
 
@@ -445,28 +437,22 @@ class _SeedDetailState extends State<SeedDetail> {
 
       child: ElnoPageLayout(
         appConfig: appConfig,
-
         showBackButton: true,
-
         promptForSave: _promptForSave,
-
         mainMenu: MainMenu(appConfig: appConfig),
-
         pageContent: Form(
           key: _formKey,
-
           child: Column(
             children: [
               Text('Seed Detail', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600)),
-
               const SizedBox(height: 12),
-
               SeedTypeCard(
                 commonName: _commonNameController.text,
                 variant: _varietyController.text,
                 botanicalName: _botanicalNameController.text,
                 storagePath: _storagePath,
                 allowImageChange: true,
+                currentObjectUuid: widget.seedTypeUuid,
                 onImageChanged: (selectedImage) {
                   setState(() {
                     _newSelectedImage = selectedImage;
@@ -478,25 +464,16 @@ class _SeedDetailState extends State<SeedDetail> {
 
               ExpansionTile(
                 title: ElnoSectionHeader(headerString: 'Plant detail'),
-
                 initiallyExpanded: false,
-
                 shape: const Border(),
-
                 collapsedShape: const Border(),
-
                 children: [
                   ElnoTextInput(
                     labelText: 'Common name',
-
                     hintText: toTitleCase(_commonNameController.text),
-
                     numLines: 1,
-
                     requiredField: true,
-
                     controller: _commonNameController,
-
                     newController: setChanged,
                   ),
 
@@ -504,15 +481,10 @@ class _SeedDetailState extends State<SeedDetail> {
 
                   ElnoTextInput(
                     labelText: 'Variety',
-
                     hintText: toTitleCase(_varietyController.text),
-
                     numLines: 1,
-
                     requiredField: false,
-
                     controller: _varietyController,
-
                     newController: setChanged,
                   ),
 
@@ -520,15 +492,10 @@ class _SeedDetailState extends State<SeedDetail> {
 
                   ElnoTextInput(
                     labelText: 'Botanical name',
-
                     hintText: toTitleCase(_botanicalNameController.text),
-
                     numLines: 1,
-
                     requiredField: false,
-
                     controller: _botanicalNameController,
-
                     newController: setChanged,
                   ),
 
@@ -542,27 +509,17 @@ class _SeedDetailState extends State<SeedDetail> {
 
               ExpansionTile(
                 title: ElnoSectionHeader(headerString: 'Plant details'),
-
                 initiallyExpanded: false,
-
                 shape: const Border(),
-
                 collapsedShape: const Border(),
-
                 children: [
                   const SizedBox(height: 12),
-
                   ElnoTextInput(
                     labelText: 'Description',
-
                     hintText: toTitleCase(_descriptionController.text),
-
                     numLines: 4,
-
                     requiredField: false,
-
                     controller: _descriptionController,
-
                     newController: setChanged,
                   ),
 
@@ -588,17 +545,11 @@ class _SeedDetailState extends State<SeedDetail> {
 
                   ElnoMinMaxInput(
                     labelText: 'Final height',
-
                     minHintText: 'Minimum',
-
                     maxHintText: 'Maximum',
-
                     minController: _minHeightController,
-
                     maxController: _maxHeightController,
-
                     newController: setChanged,
-
                     requiredField: false,
                   ),
 
@@ -606,17 +557,11 @@ class _SeedDetailState extends State<SeedDetail> {
 
                   ElnoMinMaxInput(
                     labelText: 'Spacing',
-
                     minHintText: 'Minimum',
-
                     maxHintText: 'Maximum',
-
                     minController: _minSpaceController,
-
                     maxController: _maxSpaceController,
-
                     newController: setChanged,
-
                     requiredField: false,
                   ),
 
@@ -630,29 +575,18 @@ class _SeedDetailState extends State<SeedDetail> {
 
               ExpansionTile(
                 title: ElnoSectionHeader(headerString: 'Germination'),
-
                 initiallyExpanded: false,
-
                 shape: const Border(),
-
                 collapsedShape: const Border(),
-
                 children: [
                   const SizedBox(height: 12),
-
                   ElnoMinMaxInput(
                     labelText: 'Germination temperature',
-
                     minHintText: 'Minimum °C',
-
                     maxHintText: 'Maximum °C',
-
                     minController: _minGermController,
-
                     maxController: _maxGermController,
-
                     newController: setChanged,
-
                     requiredField: false,
                   ),
 
@@ -660,7 +594,6 @@ class _SeedDetailState extends State<SeedDetail> {
 
                   ElnoBoolInput(
                     labelText: 'Stratification required',
-
                     value: _stratificationRequired,
 
                     onChanged: (newValue) {
@@ -789,18 +722,14 @@ class _SeedDetailState extends State<SeedDetail> {
               ),
 
               ExpansionTile(
-                title: ElnoSectionHeader(headerString: 'Seed Packets'),
-
+                title: ElnoSectionHeader(headerString: 'Seed Packets (${_seedPackets.length})'),
                 initiallyExpanded: false,
-
                 shape: const Border(),
-
                 collapsedShape: const Border(),
-
                 children: [
                   const SizedBox(height: 24),
 
-                  ..._seedPackets.map((seedPacket) => _buildSeedPacketCard(seedPacket)),
+                  ..._seedPackets.map((seedPacketSummary) => _buildSeedPacketCard(seedPacketSummary)),
 
                   if (_seedPackets.isEmpty)
                     const Padding(
@@ -847,6 +776,26 @@ class _SeedDetailState extends State<SeedDetail> {
 
           actions: [
             ElnoFabAction(
+              fabActionIcon: LucideIcons.mailOpen,
+
+              label: 'Add seed packet',
+
+              onSelected: () async {
+                await Navigator.of(pageContext).push(
+                  MaterialPageRoute(
+                    builder: (context) => AddSeedPacket(
+                      seedTypeUuid: widget.seedTypeUuid,
+                      commonName: _commonNameController.text,
+                      variety: _varietyController.text,
+                      botanicalName: _botanicalNameController.text,
+                      storagePath: _storagePath,
+                    ),
+                  ),
+                );
+                await _loadSeedPackets();
+              },
+            ),
+            ElnoFabAction(
               fabActionIcon: LucideIcons.trash,
 
               label: 'Delete seed type',
@@ -871,27 +820,6 @@ class _SeedDetailState extends State<SeedDetail> {
                     pageContext,
                   ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be deleted, please try again later'));
                 }
-              },
-            ),
-
-            ElnoFabAction(
-              fabActionIcon: LucideIcons.mailOpen,
-
-              label: 'Add seed packet',
-
-              onSelected: () async {
-                await Navigator.of(pageContext).push(
-                  MaterialPageRoute(
-                    builder: (context) => AddSeedPacket(
-                      seedTypeUuid: widget.seedTypeUuid,
-                      commonName: _commonNameController.text,
-                      variety: _varietyController.text,
-                      botanicalName: _botanicalNameController.text,
-                      storagePath: _storagePath,
-                    ),
-                  ),
-                );
-                await _loadSeedPackets();
               },
             ),
           ],

@@ -1,21 +1,13 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
-import '../models/seed_type_list_data.dart';
+import 'package:seedsage/seed_sage.dart';
 
 class SeedTypeListService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   Future<List<SeedTypeListData>> getSeedTypes(SeedTypeListQuery query) async {
+    // STEP 1: Get seed types
     var request = _supabase.from('obj_seed_type').select();
-    final response1 = await request;
-    debugPrint('SEED TYPES FOUND: ${response1.length}');
 
-    for (final row in response1) {
-      debugPrint(
-        'SEED: ${row['common_name']} | '
-        'UUID: ${row['seed_type_object_uuid']}',
-      );
-    }
     if (query.commonName != null && query.commonName!.isNotEmpty) {
       request = request.ilike('common_name', '%${query.commonName}%');
     }
@@ -26,37 +18,40 @@ class SeedTypeListService {
 
     final response = await request;
 
-    final List<SeedTypeListData> seeds = [];
+    if (response.isEmpty) return [];
 
-    final seedUuids = response.map<String>((row) => row['seed_type_object_uuid'] as String).toList();
+    // STEP 2: Get all relevant event histories in ONE request
+    final seedUuids = response.map((row) => row['seed_type_object_uuid'] as String).toList();
 
     final eventResponse = await _supabase
-        .from('evt_obj')
-        .select('object_uuid, event_type_uuid, event_date')
+        .from('vw_event_history')
+        .select('object_uuid, event_type_uuid, display_sequence')
+        .eq('master_data_type_uuid', SeedDefinitions.evtObjEventTypeMdTypeUuid)
         .inFilter('object_uuid', seedUuids)
-        .order('event_date', ascending: false);
+        .order('display_sequence', ascending: false);
 
-    debugPrint('EVENT ROWS RETURNED: ${eventResponse.length}');
+    // STEP 3: Find the highest event for each seed type
+    final Map<String, String> latestEvents = {};
+
+    for (final event in eventResponse) {
+      final objectUuid = event['object_uuid'] as String;
+
+      // Since events are sorted highest first,
+      // keep the first event found for each seed.
+      latestEvents.putIfAbsent(objectUuid, () => event['event_type_uuid'] as String);
+    }
+
+    // STEP 4: Build our existing seed models
+    final List<SeedTypeListData> seeds = [];
+
     for (final row in response) {
       final seedUuid = row['seed_type_object_uuid'] as String;
 
-      final matchingEvents = eventResponse.where((event) => event['object_uuid'] == seedUuid);
-
-      final latestEventUuid = matchingEvents.isEmpty ? null : matchingEvents.first['event_type_uuid'] as String?;
-
-      final rowWithEvent = {...row, 'event_uuid': latestEventUuid};
+      final rowWithEvent = {...row, 'event_uuid': latestEvents[seedUuid]};
 
       seeds.add(SeedTypeListData.fromMap(rowWithEvent));
     }
+
     return seeds;
   }
 }
-
-/*
-    return response
-    .map<SeedTypeListData>(
-      (row) => SeedTypeListData.fromMap(row),
-    )
-    .toList();
-  }
-}*/
