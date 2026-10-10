@@ -34,6 +34,24 @@ class SeedPacketProcessService {
 
     await _seedPacketService.createSeedPacket(seedPacket);
 
+    // Create initial quantity on seed packet
+    if (seedPacket.initialSeedQuantity != null) {
+      await _totalService.createTotObj(
+        seedPacketObjectUuid,
+        SeedDefinitions.initialQuantityDef,
+        seedPacket.initialSeedQuantity!,
+      );
+    }
+
+    // Create remaining quantity on seed packet
+    if (seedPacket.initialSeedQuantity != null) {
+      await _totalService.createTotObj(
+        seedPacketObjectUuid,
+        SeedDefinitions.remainingQuantityDef,
+        seedPacket.initialSeedQuantity!,
+      );
+    }
+
     // Create initial lot object
     final lotObjectUuid = await _objectService.createObjectfromType(SeedDefinitions.objObjectTypeLotUuid);
 
@@ -48,14 +66,18 @@ class SeedPacketProcessService {
 
     //Create initial quantity on lot
     if (seedPacket.initialSeedQuantity != null) {
-      await _totalService.createTotObj(lotObjectUuid, SeedDefinitions.lotQuantityDef, seedPacket.initialSeedQuantity!);
+      await _totalService.createTotObj(
+        lotObjectUuid,
+        SeedDefinitions.initialQuantityDef,
+        seedPacket.initialSeedQuantity!,
+      );
     }
 
     //Create remaining quantity on lot
     if (seedPacket.initialSeedQuantity != null) {
       await _totalService.createTotObj(
         lotObjectUuid,
-        SeedDefinitions.lotRemainingQuantityDef,
+        SeedDefinitions.remainingQuantityDef,
         seedPacket.initialSeedQuantity!,
       );
     }
@@ -81,6 +103,38 @@ class SeedPacketProcessService {
       }
     } catch (error) {
       debugPrint('Error on seed type object delete: $error');
+    }
+  }
+
+  Future<void> updateSeedPacket(SeedPacket seedPacket) async {
+    final packetUuid = seedPacket.seedPacketObjectUuid;
+    final newInitialQuantity = seedPacket.initialSeedQuantity;
+
+    if (newInitialQuantity != null) {
+      // Get current totals before updating anything
+      final oldInitialQuantity = await _totalService.getTotObj(packetUuid, SeedDefinitions.initialQuantityDef, 0);
+
+      final oldRemainingQuantity = await _totalService.getTotObj(packetUuid, SeedDefinitions.remainingQuantityDef, 0);
+
+      // Calculate the adjustment
+      final difference = newInitialQuantity - oldInitialQuantity;
+      final newRemainingQuantity = oldRemainingQuantity + difference;
+
+      // Prevent negative remaining quantities
+      if (newRemainingQuantity < 0) {
+        throw Exception('Cannot reduce initial quantity below the number of seeds already allocated.');
+      }
+
+      // Update packet attributes
+      await _seedPacketService.updateSeedPacket(seedPacket);
+
+      // Update initial quantity on packet
+      await _totalService.updateTotObj(packetUuid, SeedDefinitions.initialQuantityDef, newInitialQuantity);
+
+      // Update remaining quantity on packet
+      await _totalService.updateTotObj(packetUuid, SeedDefinitions.remainingQuantityDef, newRemainingQuantity);
+    } else {
+      await _seedPacketService.updateSeedPacket(seedPacket);
     }
   }
 }

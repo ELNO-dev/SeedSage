@@ -20,7 +20,6 @@ class LotProcessService {
 
     while (true) {
       final lot = await _lotCrudService.getLotObjectFromUuid(currentLotUuid);
-
       lotUuids.add(lot.lotUuid);
 
       if (lot.parentObjectUuid == seedPacketUuid) {
@@ -41,7 +40,7 @@ class LotProcessService {
     required String seedPacketUuid,
     required String seedTypeUuid,
   }) async {
-    // Get quantity available on parent lot
+    // Get quantity remaining on parent lot
     final parentLotQuantity = (await _lotCrudService.getLotFromHistory(parentLotUuid)).remainingQuantity;
 
     // Validate quantity
@@ -59,19 +58,15 @@ class LotProcessService {
 
     //Create initial quantity on lot
 
-    await _totalService.createTotObj(lotObjectUuid, SeedDefinitions.lotQuantityDef, seedQuantity);
+    await _totalService.createTotObj(lotObjectUuid, SeedDefinitions.initialQuantityDef, seedQuantity);
 
     //Create remaining quantity on lot
-    await _totalService.createTotObj(lotObjectUuid, SeedDefinitions.lotRemainingQuantityDef, seedQuantity);
+    await _totalService.createTotObj(lotObjectUuid, SeedDefinitions.remainingQuantityDef, seedQuantity);
 
     // update parent remaining lot quantity
     final parentRemainingLotQuantity = parentLotQuantity - seedQuantity;
 
-    await _totalService.updateTotObj(
-      parentLotUuid,
-      SeedDefinitions.lotRemainingQuantityDef,
-      parentRemainingLotQuantity,
-    );
+    await _totalService.updateTotObj(parentLotUuid, SeedDefinitions.remainingQuantityDef, parentRemainingLotQuantity);
     // Get latest event on seed packet
     final packetHighestEvent = await _eventService.getHighestEventByDisplaySequence(
       seedPacketUuid,

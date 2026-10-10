@@ -104,17 +104,14 @@ class SeedDefinitions {
   // TOTAL DEFINITIONS
   // ===========================================================================
 
-  static const String lotQuantityDef = '8adb0c5e-eb72-4df6-9b87-57321fff49fd';
+  static const String initialQuantityDef = '8adb0c5e-eb72-4df6-9b87-57321fff49fd';
 
-  static const String lotRemainingQuantityDef = 'bb4775a3-472d-4b00-8308-de25cebfbd4c';
+  static const String remainingQuantityDef = 'bb4775a3-472d-4b00-8308-de25cebfbd4c';
 
   // ---------------------------------------------------------------------------
   // Seed Packet Totals
   // OBJ_OBJECT_TYPE_SEED_PACKET
   // ---------------------------------------------------------------------------
-
-  /// Available quantity - INTEGER
-  static const String objSeedPacketAvailableQuantityTotDefUuid = '9596bd31-7263-4d13-ac19-952cbd8c1323';
 
   /// Germination rate - DECIMAL
   static const String objSeedPacketGerminationRateTotDefUuid = '9fd98af6-a70b-472f-a711-4951943c0f31';

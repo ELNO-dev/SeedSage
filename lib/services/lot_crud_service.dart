@@ -53,8 +53,8 @@ class LotCrudService {
         latestEventTypeUuid: lotsummary['latest_event_type_uuid'],
         latestEventUuid: lotsummary['latest_event_uuid'],
         eventIconCode: lotsummary['latest_event_icon_code'],
-        lotQuantity: lotsummary['total_seeds'],
-        remainingQuantity: lotsummary['remaining_seeds'],
+        lotQuantity: lotsummary['initial_lot_quantity'],
+        remainingQuantity: lotsummary['remaining_quantity'],
       );
     }).toList();
   }
@@ -72,8 +72,8 @@ class LotCrudService {
         eventTypeUuid: lotHistory['event_type_uuid'],
         eventUuid: lotHistory['event_uuid'],
         eventIconCode: lotHistory['event_icon_code'],
-        lotQuantity: lotHistory['lot_quantity'],
-        remainingQuantity: lotHistory['lot_remaining_quantity'],
+        lotQuantity: lotHistory['initial_lot_quantity'],
+        remainingQuantity: lotHistory['remaining_quantity'],
         displaySequence: lotHistory['event_display_sequence'],
       );
     }).toList();
@@ -98,8 +98,8 @@ class LotCrudService {
       eventTypeUuid: response['event_type_uuid'],
       eventUuid: response['event_uuid'],
       eventIconCode: response['event_icon_code'],
-      lotQuantity: response['lot_quantity'],
-      remainingQuantity: response['lot_remaining_quantity'],
+      lotQuantity: response['initial_lot_quantity'],
+      remainingQuantity: response['remaining_quantity'],
     );
   }
 
@@ -136,8 +136,8 @@ class LotCrudService {
       latestEventTypeUuid: latestLot['latest_event_type_uuid'],
       latestEventUuid: latestLot['latest_event_uuid'],
       eventIconCode: latestLot['latest_event_icon_code'],
-      lotQuantity: latestLot['total_seeds'],
-      remainingQuantity: latestLot['remaining_seeds'],
+      lotQuantity: latestLot['initial_lot_quantity'],
+      remainingQuantity: latestLot['remaining_quantity'],
     );
   }
 
@@ -154,8 +154,8 @@ class LotCrudService {
         eventTypeUuid: lotHistory['event_type_uuid'],
         eventUuid: lotHistory['event_uuid'],
         eventIconCode: lotHistory['event_icon_code'],
-        lotQuantity: lotHistory['lot_quantity'],
-        remainingQuantity: lotHistory['lot_remaining_quantity'],
+        lotQuantity: lotHistory['initial_lot_quantity'],
+        remainingQuantity: lotHistory['remaining_quantity'],
         displaySequence: lotHistory['event_display_sequence'],
       );
     }).toList();
@@ -173,8 +173,8 @@ class LotCrudService {
       eventTypeUuid: response['event_type_uuid'],
       eventUuid: response['event_uuid'],
       eventIconCode: response['event_icon_code'],
-      lotQuantity: response['lot_quantity'],
-      remainingQuantity: response['lot_remaining_quantity'],
+      lotQuantity: response['initial_lot_quantity'],
+      remainingQuantity: response['remaining_quantity'],
     );
   }
 
@@ -184,7 +184,7 @@ class LotCrudService {
         .from('vw_lot_summary')
         .select()
         .eq('seed_packet_uuid', seedPacketUuid)
-        .gt('remaining_seeds', 0);
+        .gt('remaining_quantity', 0);
 
     return response.map<LotSummary>((lot) {
       return LotSummary(
@@ -195,9 +195,13 @@ class LotCrudService {
         latestEventTypeUuid: lot['latest_event_type_uuid'],
         latestEventUuid: lot['latest_event_uuid'],
         eventIconCode: lot['latest_event_icon_code'],
-        lotQuantity: lot['total_seeds'],
-        remainingQuantity: lot['remaining_seeds'],
+        lotQuantity: lot['initial_lot_quantity'],
+        remainingQuantity: lot['remaining_quantity'],
       );
     }).toList();
+  }
+
+  Future<void> deleteALot({required String lotUuid}) async {
+    await _supabase.rpc('delete_lot', params: {'p_lot_uuid': lotUuid});
   }
 }

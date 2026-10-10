@@ -213,7 +213,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
     );
 
     try {
-      await _seedPacketService.updateSeedPacket(updateSeedPacket);
+      await _seedPacketProcessService.updateSeedPacket(updateSeedPacket);
     } catch (error) {
       // Ellen fucked up
 

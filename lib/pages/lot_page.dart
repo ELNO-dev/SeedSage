@@ -3,6 +3,7 @@ import 'package:foundation/foundation.dart';
 import 'package:seedsage/seed_sage.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SeedPacketLotPage extends StatefulWidget {
   final String seedPacketUuid;
@@ -34,6 +35,7 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
   final TextEditingController _eventSeedQuantityController = TextEditingController();
   final ElnoMdCrudService _mdGetService = ElnoMdCrudService();
   final LotProcessService _lotProcessService = LotProcessService();
+  final LotCrudService _lotCrudService = LotCrudService();
   DateTime? _eventDate;
   bool _hasChanged = false;
   String? _selectedEvent;
@@ -154,12 +156,84 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
       latestLotUuid: _latestLotUuid,
       seedPacketUuid: widget.seedPacketUuid,
     );
-
     if (!mounted) return;
 
     setState(() {
       _lotHistoryData = options;
     });
+  }
+
+  // Helper to delete last lot
+  void _deleteEvent() async {
+    final latestHistory = _lotHistoryData.where((history) => history.lotUuid == _latestLotUuid).firstOrNull;
+    if (latestHistory!.parentObjectUuid != widget.seedPacketUuid) {
+      await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Are you sure you want to delete the event?'),
+
+            content: const Text('This will only delete the last event in your history'),
+
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, false);
+                },
+
+                child: const Text('Cancel'),
+              ),
+
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext, true);
+                  try {
+                    await _lotCrudService.deleteALot(lotUuid: latestHistory.lotUuid);
+                    _latestLotUuid = latestHistory.parentObjectUuid;
+                    await _loadEventOptions();
+                  } catch (error) {
+                    if (!mounted) return;
+                    if (error is PostgrestException && error.code == 'SS001') {
+                      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar.failed(message: error.message.toString()));
+                    } else {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(AppSnackBar.failed(message: error.toString().replaceFirst('Exception: ', '')));
+                    }
+                  }
+                },
+                child: const Text('Delete seed event', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('You can\'t delete a not sown event'),
+
+            content: const Text(
+              'Delete the seed packet'
+              ' in the seed packet view',
+              style: TextStyle(color: Colors.red),
+            ),
+
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, false);
+                },
+
+                child: const Text('Ok'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   // pop up to add event
@@ -1012,6 +1086,7 @@ class _SeedPacketLotPage extends State<SeedPacketLotPage> {
 
         actions: [
           ElnoFabAction(fabActionIcon: LucideIcons.calendarPlus, label: 'Add event', onSelected: _showAddEvent),
+          ElnoFabAction(fabActionIcon: LucideIcons.trash, label: 'Delete last event', onSelected: _deleteEvent),
         ],
       ),
     );

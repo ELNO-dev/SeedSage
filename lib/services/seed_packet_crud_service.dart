@@ -92,7 +92,7 @@ class SeedPacketService {
         source: row['source'],
         purchaseDate: row['purchase_date'] != null ? DateTime.parse(row['purchase_date']) : null,
         initialSeedQuantity: row['initial_seed_quantity'],
-        remainingQuantity: row['available_quantity'],
+        remainingQuantity: row['remaining_quantity'],
         latestEventUuid: row['latest_event_uuid'],
         latestEventTypeUuid: row['latest_event_type_uuid'],
         latestEventDisplayValue: row['latest_event_display_value'],
