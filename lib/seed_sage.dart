@@ -19,6 +19,7 @@ export 'models/event.dart';
 export 'pages/landing_page.dart';
 export 'pages/main_menu_about_page.dart';
 export 'pages/main_menu_terms_page.dart';
+export 'pages/main_menu_privacy_policy.dart';
 export 'pages/main_menu.dart';
 export 'pages/seed_packet_add.dart';
 export 'pages/seed_packet_detail.dart';

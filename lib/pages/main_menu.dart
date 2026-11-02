@@ -56,6 +56,19 @@ class MainMenu extends StatelessWidget {
             },
           ),
           ListTile(
+            title: const Text('Privacy Policy', style: TextStyle(fontSize: 20)),
+            onTap: () {
+              final navigator = Navigator.of(mainMenuContext);
+
+              navigator.pop();
+
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (privacyPageContext) => PrivacyPage(appConfig: appConfig)),
+                (route) => route.isFirst,
+              );
+            },
+          ),
+          ListTile(
             title: const Text('About', style: TextStyle(fontSize: 20)),
             onTap: () {
               final navigator = Navigator.of(mainMenuContext);

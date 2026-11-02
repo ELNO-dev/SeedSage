@@ -2,8 +2,9 @@ import 'package:foundation/models/elno_app_config.dart';
 
 const appConfig = AppConfig(
   appName: 'SeedSage',
-  tcContent: 'blah blah',
-  aContent: 'yada yada',
+  tcContent: '',
+  aContent: 'SeedSage is an ELNO application.',
+  pContent: '',
   fullLogoAsset: 'assets/logos/full_logo.png',
   stripLogoAsset: 'assets/logos/strip_logo.png',
   supabaseUrl: 'https://pxxwtgiihybnsgmkzycz.supabase.co',

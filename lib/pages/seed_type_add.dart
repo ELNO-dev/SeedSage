@@ -326,57 +326,63 @@ class _AddSeedTypeState extends State<AddSeedType> {
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-              onPressed: () async {
-                final isValid = _formKey.currentState!.validate();
+              onPressed: _isSaving
+                  ? null
+                  : () async {
+                      if (_isSaving) return;
+                      final isValid = _formKey.currentState!.validate();
 
-                setState(() {
-                  _isSaving = true;
-                });
-                if (!isValid) {
-                  setState(() {
-                    _isSaving = false;
-                  });
-                  return;
-                }
-                final seedType = SeedType(
-                  commonName: _commonNameController.text.trim(),
-                  variant: _varietyController.text.trim(),
-                  botanicalName: _botanicalNameController.text.trim(),
-                  description: _descriptionController.text.trim(),
-                  minGerminationTemperatureC: int.tryParse(_minGermController.text),
-                  maxGerminationTemperatureC: int.tryParse(_maxGermController.text),
-                  growingInstructions: _growingInstController.text.trim(),
-                  minHeightCm: int.tryParse(_minHeightController.text),
-                  maxHeightCm: int.tryParse(_maxHeightController.text),
-                  minSpacingCm: int.tryParse(_minSpaceController.text),
-                  maxSpacingCm: int.tryParse(_maxSpaceController.text),
-                  stratificationRequired: _stratificationRequired,
-                  pinchingRequired: _pinchingRequired,
-                  minGerminationDays: int.tryParse(_minGermDayController.text),
-                  maxGerminationDays: int.tryParse(_maxGermDayController.text),
-                  minTransplantDays: int.tryParse(_minTransDayController.text),
-                  maxTransplantDays: int.tryParse(_maxTransDayController.text),
-                  minFlowerFruitDays: int.tryParse(_minFruitDayController.text),
-                  maxFlowerFruitDays: int.tryParse(_maxFruitDayController.text),
-                  lifeCycleUuid: _lifeCycle,
-                  imageId: _selectedImage?.imageObjectUuid,
-                );
+                      setState(() {
+                        _isSaving = true;
+                      });
+                      if (!isValid) {
+                        setState(() {
+                          _isSaving = false;
+                        });
+                        return;
+                      }
+                      final seedType = SeedType(
+                        commonName: _commonNameController.text.trim(),
+                        variant: _varietyController.text.trim(),
+                        botanicalName: _botanicalNameController.text.trim(),
+                        description: _descriptionController.text.trim(),
+                        minGerminationTemperatureC: int.tryParse(_minGermController.text),
+                        maxGerminationTemperatureC: int.tryParse(_maxGermController.text),
+                        growingInstructions: _growingInstController.text.trim(),
+                        minHeightCm: int.tryParse(_minHeightController.text),
+                        maxHeightCm: int.tryParse(_maxHeightController.text),
+                        minSpacingCm: int.tryParse(_minSpaceController.text),
+                        maxSpacingCm: int.tryParse(_maxSpaceController.text),
+                        stratificationRequired: _stratificationRequired,
+                        pinchingRequired: _pinchingRequired,
+                        minGerminationDays: int.tryParse(_minGermDayController.text),
+                        maxGerminationDays: int.tryParse(_maxGermDayController.text),
+                        minTransplantDays: int.tryParse(_minTransDayController.text),
+                        maxTransplantDays: int.tryParse(_maxTransDayController.text),
+                        minFlowerFruitDays: int.tryParse(_minFruitDayController.text),
+                        maxFlowerFruitDays: int.tryParse(_maxFruitDayController.text),
+                        lifeCycleUuid: _lifeCycle,
+                        imageId: _selectedImage?.imageObjectUuid,
+                      );
 
-                if (isValid) {
-                  try {
-                    await _seedTypeProcessService.createSeedType(seedType: seedType);
-                    if (!pageContext.mounted) return;
-                  } catch (error) {
-                    if (!pageContext.mounted) return;
-                    ScaffoldMessenger.of(
-                      pageContext,
-                    ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be created, please try again later'));
-                    return;
-                  }
+                      if (isValid) {
+                        try {
+                          await _seedTypeProcessService.createSeedType(seedType: seedType);
+                          if (!pageContext.mounted) return;
+                        } catch (error) {
+                          if (!pageContext.mounted) return;
+                          setState(() {
+                            _isSaving = false;
+                          });
+                          ScaffoldMessenger.of(pageContext).showSnackBar(
+                            AppSnackBar.failed(message: 'Seed could not be created, please try again later'),
+                          );
+                          return;
+                        }
 
-                  Navigator.pop(pageContext);
-                }
-              },
+                        Navigator.pop(pageContext);
+                      }
+                    },
               child: _isSaving
                   ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Save the seed', style: TextStyle(fontSize: 20)),

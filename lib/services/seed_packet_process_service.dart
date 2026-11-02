@@ -137,4 +137,54 @@ class SeedPacketProcessService {
       await _seedPacketService.updateSeedPacket(seedPacket);
     }
   }
+
+  // Get status bar totals
+  Future<SeedPacketQtySummary> getSeedPacketQuantity({required String seedPacketUuid}) async {
+    final lots = await _lotService.getAllOpenLotsFromPacket(seedPacketUuid);
+
+    final int notSown = lots
+        .where((lot) => lot.latestEventTypeUuid == SeedDefinitions.evtObjEventTypeNotSownUuid)
+        .fold<int>(0, (sum, lot) => sum + lot.remainingQuantity);
+
+    final int sown = lots
+        .where((lot) => lot.latestEventTypeUuid == SeedDefinitions.evtObjEventTypeSowingUuid)
+        .fold<int>(0, (sum, lot) => sum + lot.remainingQuantity);
+
+    final int sprouted = lots
+        .where((lot) => lot.latestEventTypeUuid == SeedDefinitions.evtObjEventTypeGerminationUuid)
+        .fold<int>(0, (sum, lot) => sum + lot.remainingQuantity);
+
+    final int planted = lots
+        .where((lot) => lot.latestEventTypeUuid == SeedDefinitions.evtObjEventTypeTransplantUuid)
+        .fold<int>(0, (sum, lot) => sum + lot.remainingQuantity);
+
+    final int mature = lots
+        .where((lot) => lot.latestEventTypeUuid == SeedDefinitions.evtObjEventTypeFruitingFloweringUuid)
+        .fold<int>(0, (sum, lot) => sum + lot.remainingQuantity);
+
+    final int done = lots
+        .where((lot) => lot.latestEventTypeUuid == SeedDefinitions.evtObjEventTypeMarkAsDoneUuid)
+        .fold<int>(0, (sum, lot) => sum + lot.remainingQuantity);
+
+    final int lost = lots
+        .where(
+          (lot) => [
+            SeedDefinitions.evtObjEventTypeNoGerminationUuid,
+            SeedDefinitions.evtObjEventTypeLostUuid,
+            SeedDefinitions.evtObjEventTypeDiscardedUuid,
+          ].contains(lot.latestEventTypeUuid),
+        )
+        .fold<int>(0, (sum, lot) => sum + lot.remainingQuantity);
+
+    return SeedPacketQtySummary(
+      seedPacketObjectUuid: seedPacketUuid,
+      notSownQty: notSown,
+      sownQty: sown,
+      sproutedQty: sprouted,
+      plantedQty: planted,
+      matureQty: mature,
+      doneQty: done,
+      lostQty: lost,
+    );
+  }
 }

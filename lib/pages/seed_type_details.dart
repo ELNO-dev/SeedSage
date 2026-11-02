@@ -309,10 +309,12 @@ class _SeedDetailState extends State<SeedDetail> {
 
   // Save Seed Type Helper
 
-  Future<void> _saveSeedType() async {
-    final isValid = _formKey.currentState!.validate();
+  Future<bool> _saveSeedType() async {
+    if (_isSaving) return false;
+    if (!_hasChanged) return true;
 
-    if (!isValid) return;
+    final isValid = _formKey.currentState!.validate();
+    if (!isValid) return false;
 
     setState(() {
       _isSaving = true;
@@ -353,14 +355,30 @@ class _SeedDetailState extends State<SeedDetail> {
           await _imgCrudService.updateImageLink(widget.seedTypeUuid, _newSelectedImage!.imageObjectUuid);
         }
       }
-    } catch (error) {
-      // Ellen fucked up
 
-      debugPrint('Ellen fucked up: $error');
-    } finally {
+      if (!mounted) return false;
+
       setState(() {
-        _isSaving = false;
+        _hasChanged = false;
+        _existingImage = _newSelectedImage ?? _existingImage;
+        _newSelectedImage = null;
       });
+      return true;
+    } catch (error) {
+      debugPrint('Seed type update failed: $error');
+
+      if (!mounted) return false;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(AppSnackBar.failed(message: 'Seed could not be updated, please try again later'));
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
@@ -394,11 +412,13 @@ class _SeedDetailState extends State<SeedDetail> {
                 onPressed: () async {
                   Navigator.of(dialogContext).pop();
 
-                  await _saveSeedType();
+                  final savedSuccessfully = await _saveSeedType();
 
                   if (!mounted) return;
 
-                  Navigator.of(context).pop();
+                  if (savedSuccessfully) {
+                    Navigator.of(context).pop();
+                  }
                 },
 
                 child: const Text('Save and exit'),
@@ -757,11 +777,12 @@ class _SeedDetailState extends State<SeedDetail> {
                   backgroundColor: _hasChanged ? const Color(0xFFF6C3D3) : const Color(0xFFFFFFFF),
                 ),
 
-                onPressed: () async {
-                  await _saveSeedType();
-
-                  _hasChanged = false;
-                },
+                onPressed: (_isSaving || !_hasChanged)
+                    ? null
+                    : () async {
+                        if (_isSaving || !_hasChanged) return;
+                        await _saveSeedType();
+                      },
 
                 child: _isSaving
                     ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))

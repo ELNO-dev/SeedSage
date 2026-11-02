@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:seedsage/seed_sage.dart';
 
-class SeedPacketStatusBar extends StatefulWidget {
-  final String seedPacketUuid;
+class SeedPacketStatusBar extends StatelessWidget {
+  final SeedPacketQtySummary seedPacketQty;
 
-  const SeedPacketStatusBar({super.key, required this.seedPacketUuid});
-  @override
-  State<SeedPacketStatusBar> createState() => _SeedPacketStatusBar();
-}
-
-class _SeedPacketStatusBar extends State<SeedPacketStatusBar> {
+  const SeedPacketStatusBar({super.key, required this.seedPacketQty});
   @override
   Widget build(BuildContext pageContext) {
     return Column(
@@ -25,7 +21,10 @@ class _SeedPacketStatusBar extends State<SeedPacketStatusBar> {
                   const SizedBox(height: 6),
                   const Text('Not\nSown', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                   const SizedBox(height: 4),
-                  const Text('22', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    seedPacketQty.notSownQty.toString(),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),
@@ -36,7 +35,7 @@ class _SeedPacketStatusBar extends State<SeedPacketStatusBar> {
                   const SizedBox(height: 6),
                   const Text('Sown', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                   const SizedBox(height: 4),
-                  const Text('8', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(seedPacketQty.sownQty.toString(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -47,7 +46,10 @@ class _SeedPacketStatusBar extends State<SeedPacketStatusBar> {
                   const SizedBox(height: 6),
                   const Text('Sprouted', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                   const SizedBox(height: 4),
-                  const Text('6', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    seedPacketQty.sproutedQty.toString(),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),
@@ -58,7 +60,10 @@ class _SeedPacketStatusBar extends State<SeedPacketStatusBar> {
                   const SizedBox(height: 6),
                   const Text('Planted', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                   const SizedBox(height: 4),
-                  const Text('4', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    seedPacketQty.plantedQty.toString(),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             ),
@@ -69,7 +74,7 @@ class _SeedPacketStatusBar extends State<SeedPacketStatusBar> {
                   const SizedBox(height: 6),
                   const Text('Mature', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                   const SizedBox(height: 4),
-                  const Text('2', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(seedPacketQty.matureQty.toString(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -80,7 +85,7 @@ class _SeedPacketStatusBar extends State<SeedPacketStatusBar> {
                   const SizedBox(height: 6),
                   const Text('Done', textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
                   const SizedBox(height: 4),
-                  const Text('1', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(seedPacketQty.doneQty.toString(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -93,7 +98,7 @@ class _SeedPacketStatusBar extends State<SeedPacketStatusBar> {
             const SizedBox(width: 6),
             const Text('Lost', style: TextStyle(fontSize: 12)),
             const SizedBox(width: 6),
-            const Text('3', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(seedPacketQty.lostQty.toString(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
       ],

@@ -43,3 +43,25 @@ class SeedPacketSummary {
     required this.latestEventIconCode,
   });
 }
+
+class SeedPacketQtySummary {
+  final String seedPacketObjectUuid;
+  final int notSownQty;
+  final int sownQty;
+  final int sproutedQty;
+  final int plantedQty;
+  final int matureQty;
+  final int doneQty;
+  final int lostQty;
+
+  const SeedPacketQtySummary({
+    required this.seedPacketObjectUuid,
+    required this.notSownQty,
+    required this.sownQty,
+    required this.sproutedQty,
+    required this.plantedQty,
+    required this.matureQty,
+    required this.doneQty,
+    required this.lostQty,
+  });
+}

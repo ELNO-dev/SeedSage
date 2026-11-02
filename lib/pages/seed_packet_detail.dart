@@ -37,12 +37,14 @@ class _SeedPacketState extends State<SeedPacketDetail> {
   bool _hasChanged = false;
   bool _isSaving = false;
   List<LotSummary> _lotSummaries = [];
+  SeedPacketQtySummary? _seedPacketQty;
 
   @override
   void initState() {
     super.initState();
     _loadInitialSeedPacket();
     _loadlotSummaries();
+    _loadQuantities();
   }
 
   // Helper to get seed lot summaries
@@ -53,6 +55,15 @@ class _SeedPacketState extends State<SeedPacketDetail> {
 
     setState(() {
       _lotSummaries = openLots;
+    });
+  }
+
+  // Helper to get packet status bar quantities
+  Future<void> _loadQuantities() async {
+    final seedPacketQty = await _seedPacketProcessService.getSeedPacketQuantity(seedPacketUuid: widget.seedPacketUuid);
+    if (!mounted) return;
+    setState(() {
+      _seedPacketQty = seedPacketQty;
     });
   }
 
@@ -80,6 +91,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
           );
 
           await _loadlotSummaries();
+          await _loadQuantities();
         },
 
         child: Container(
@@ -215,9 +227,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
     try {
       await _seedPacketProcessService.updateSeedPacket(updateSeedPacket);
     } catch (error) {
-      // Ellen fucked up
-
-      debugPrint('Ellen fucked up: $error');
+      debugPrint('************Error: $error');
     } finally {
       setState(() {
         _isSaving = false;
@@ -312,7 +322,7 @@ class _SeedPacketState extends State<SeedPacketDetail> {
                 currentObjectUuid: widget.seedPacketUuid,
               ),
               const SizedBox(height: 14),
-              SeedPacketStatusBar(seedPacketUuid: widget.seedPacketUuid),
+              _seedPacketQty == null ? SizedBox.shrink() : SeedPacketStatusBar(seedPacketQty: _seedPacketQty!),
 
               const SizedBox(height: 14),
 
